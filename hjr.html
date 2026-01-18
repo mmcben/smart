@@ -1,0 +1,5078 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Myagdi Campus - Teacher Attendance System</title>
+
+    <!-- Firebase SDKs -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
+
+    <!-- Nepali Datepicker CSS -->
+    <link href="https://nepalidatepicker.sajanmaharjan.com.np/v5/nepali.datepicker/css/nepali.datepicker.v5.0.6.min.css" rel="stylesheet" type="text/css"/>
+
+    <style>
+        /* Reset and Base Styles */
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            margin: 10px;
+            font-size: 14px;
+            background: #f5f5f5;
+        }
+
+        /* Login Page */
+        .login-container {
+            max-width: 400px;
+            margin: 50px auto;
+            padding: 20px;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+
+        .login-header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .login-header img {
+            height: 80px;
+            margin-bottom: 15px;
+        }
+
+        .login-header .title {
+            font-size: 22px;
+            font-weight: bold;
+            color: #2c3e50;
+            margin-bottom: 5px;
+        }
+
+        .login-header .subtitle {
+            font-size: 14px;
+            color: #7f8c8d;
+        }
+
+        .login-form {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .login-form select,
+        .login-form input {
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 16px;
+        }
+
+        .login-form button {
+            padding: 12px;
+            background: #3498db;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-size: 16px;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+
+        .login-form button:hover {
+            background: #2980b9;
+        }
+
+        .login-options {
+            text-align: center;
+            margin-top: 20px;
+        }
+
+        .mode-toggle {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin: 20px 0;
+        }
+
+        .mode-btn {
+            padding: 8px 20px;
+            border: 2px solid #3498db;
+            background: white;
+            color: #3498db;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        .mode-btn.active {
+            background: #3498db;
+            color: white;
+        }
+
+        /* Admin Panel */
+        .admin-panel, .student-panel {
+            display: none;
+        }
+
+        .header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 15px;
+            border-bottom: 2px solid #000;
+            padding-bottom: 10px;
+            flex-wrap: wrap;
+            background: white;
+            padding: 15px;
+            border-radius: 5px;
+        }
+        .header img {
+            height: 60px;
+            margin-right: 10px;
+        }
+        .header-content {
+            flex: 1;
+            min-width: 200px;
+        }
+        .title {
+            font-size: 18px;
+            font-weight: bold;
+            margin: 2px 0;
+            line-height: 1.2;
+        }
+        .subtitle {
+            font-size: 12px;
+            margin-bottom: 2px;
+        }
+
+        /* Form styling */
+        .form-box {
+            margin-bottom: 15px;
+            background: white;
+            padding: 15px;
+            border-radius: 5px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .form-box label {
+            font-size: 12px;
+            font-weight: bold;
+            margin-right: 2px;
+        }
+
+        .form-box input,
+        .form-box select {
+            padding: 8px 10px;
+            margin: 2px;
+            border: 1px solid #ccc;
+            border-radius: 3px;
+            font-size: 13px;
+            min-width: 120px;
+        }
+
+        .form-box button {
+            padding: 8px 15px;
+            margin: 2px;
+            border: none;
+            border-radius: 3px;
+            cursor: pointer;
+            font-size: 13px;
+            min-width: 80px;
+        }
+
+        .btn-primary {
+            background-color: #007bff;
+            color: white;
+        }
+
+        .btn-secondary {
+            background-color: #6c757d;
+            color: white;
+        }
+
+        .btn-danger {
+            background-color: #dc3545;
+            color: white;
+        }
+
+        .btn-success {
+            background-color: #28a745;
+            color: white;
+        }
+
+        .btn-warning {
+            background-color: #ffc107;
+            color: #212529;
+        }
+
+        .btn-info {
+            background-color: #17a2b8;
+            color: white;
+        }
+
+        .btn-dark {
+            background-color: #343a40;
+            color: white;
+        }
+
+        /* Teacher management */
+        .teacher-management {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 15px 0;
+            border: 1px solid #dee2e6;
+        }
+
+        .teacher-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin: 10px 0;
+        }
+
+        .teacher-item {
+            background: white;
+            padding: 8px 12px;
+            border: 1px solid #dee2e6;
+            border-radius: 3px;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .remove-teacher {
+            color: #dc3545;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 16px;
+            line-height: 1;
+        }
+
+        /* Record editing */
+        .edit-record {
+            background: #e8f4fd;
+            border-left: 4px solid #3498db;
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 5px;
+        }
+
+        .edit-actions {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-top: 10px;
+        }
+
+        .record-item {
+            background: white;
+            padding: 8px 12px;
+            border: 1px solid #dee2e6;
+            border-radius: 3px;
+            margin: 5px 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .record-actions {
+            display: flex;
+            gap: 5px;
+        }
+
+        .edit-btn {
+            background: #ffc107;
+            color: #212529;
+            border: none;
+            padding: 4px 8px;
+            border-radius: 3px;
+            cursor: pointer;
+            font-size: 11px;
+        }
+
+        .delete-btn {
+            background: #dc3545;
+            color: white;
+            border: none;
+            padding: 4px 8px;
+            border-radius: 3px;
+            cursor: pointer;
+            font-size: 11px;
+        }
+
+        /* Table styling */
+        .table-container {
+            overflow-x: auto;
+            margin-top: 10px;
+            -webkit-overflow-scrolling: touch;
+            background: white;
+            padding: 10px;
+            border-radius: 5px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 12px;
+            min-width: 800px;
+        }
+        th, td {
+            border: 1px solid #000;
+            padding: 4px;
+            text-align: center;
+            word-break: break-word;
+        }
+        .teacher-name {
+            font-weight: bold;
+            font-size: 12px;
+        }
+        .bottom-row {
+            font-weight: bold;
+            background: #f2f2f2;
+        }
+
+        .clickable-cell {
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+
+        .clickable-cell:hover {
+            background-color: #f8f9fa;
+        }
+
+        /* Editable teacher name in table */
+        .editable-teacher-name {
+            cursor: pointer;
+            padding: 2px 4px;
+            border-radius: 3px;
+            transition: all 0.2s;
+        }
+
+        .editable-teacher-name:hover {
+            background-color: #e8f4fd;
+            border: 1px dashed #3498db;
+        }
+
+        .editable-teacher-name.editing {
+            background-color: #fff3cd;
+            border: 1px solid #ffc107;
+        }
+
+        /* Editable table cells */
+        .editable-cell {
+            cursor: pointer;
+            min-height: 20px;
+        }
+
+        .editable-cell:hover {
+            background-color: #e8f9fa !important;
+        }
+
+        .editable-cell.editing {
+            background-color: #fff3cd !important;
+            border: 2px solid #ffc107 !important;
+            padding: 2px !important;
+        }
+
+        /* Special status row - Simple style */
+        .status-row {
+            font-weight: bold;
+            text-align: center;
+            background-color: white !important;
+        }
+
+        .saturday-row {
+            font-style: italic;
+        }
+
+        .holiday-row {
+            font-style: italic;
+        }
+
+        .no-class-row {
+            font-style: italic;
+        }
+
+        /* Sortable table headers */
+        .sortable-header {
+            cursor: pointer;
+            position: relative;
+            user-select: none;
+        }
+
+        .sortable-header:hover {
+            background-color: #f8f9fa;
+        }
+
+        .sortable-header::after {
+            content: '↕';
+            font-size: 10px;
+            margin-left: 5px;
+            opacity: 0.5;
+        }
+
+        .sortable-header.asc::after {
+            content: '↑';
+            opacity: 1;
+        }
+
+        .sortable-header.desc::after {
+            content: '↓';
+            opacity: 1;
+        }
+
+        /* Logout button */
+        .logout-btn {
+            position: fixed;
+            top: 10px;
+            right: 10px;
+            padding: 8px 15px;
+            background: #dc3545;
+            color: white;
+            border: none;
+            border-radius: 3px;
+            cursor: pointer;
+            z-index: 1000;
+        }
+
+        /* Modal for editing */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 2000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-content {
+            background: white;
+            padding: 20px;
+            border-radius: 5px;
+            width: 90%;
+            max-width: 500px;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            border-bottom: 1px solid #dee2e6;
+            padding-bottom: 10px;
+        }
+
+        .close-modal {
+            font-size: 24px;
+            cursor: pointer;
+            color: #7f8c8d;
+        }
+
+        /* Faculty Management */
+        .faculty-management {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 5px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+
+        .faculty-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 10px;
+            margin: 15px 0;
+        }
+
+        .faculty-item {
+            background: white;
+            border: 1px solid #dee2e6;
+            border-radius: 5px;
+            padding: 15px;
+            position: relative;
+        }
+
+        .faculty-item h4 {
+            margin: 0 0 10px 0;
+            color: #2c3e50;
+            font-size: 14px;
+        }
+
+        .class-list {
+            list-style: none;
+            padding: 0;
+            margin: 10px 0;
+        }
+
+        .class-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 5px 0;
+            border-bottom: 1px solid #f1f1f1;
+        }
+
+        .class-item:last-child {
+            border-bottom: none;
+        }
+
+        .faculty-actions {
+            display: flex;
+            gap: 5px;
+            margin-top: 10px;
+        }
+
+        .faculty-actions button {
+            padding: 4px 8px;
+            font-size: 11px;
+        }
+
+        /* Date input with manual typing */
+        .date-input-container {
+            position: relative;
+            display: flex;
+            align-items: center;
+        }
+
+        .date-input-container input {
+            flex: 1;
+        }
+
+        .date-input-container .today-btn {
+            background: #6c757d;
+            color: white;
+            border: none;
+            padding: 8px 10px;
+            border-radius: 0 3px 3px 0;
+            cursor: pointer;
+            font-size: 12px;
+            margin-left: -1px;
+        }
+
+        .date-input-container .today-btn:hover {
+            background: #5a6268;
+        }
+
+        /* Password management */
+        .password-management {
+            background: #f0f8ff;
+            border: 1px solid #cce5ff;
+            border-radius: 5px;
+            padding: 15px;
+            margin: 15px 0;
+        }
+
+        .password-form {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .password-form input {
+            padding: 8px;
+            border: 1px solid #ccc;
+            border-radius: 3px;
+            flex: 1;
+            min-width: 150px;
+        }
+
+        .password-form button {
+            padding: 8px 15px;
+            background: #28a745;
+            color: white;
+            border: none;
+            border-radius: 3px;
+            cursor: pointer;
+        }
+
+        /* Status indicators */
+        .status-indicator {
+            display: none !important;
+            padding: 3px 8px;
+            border-radius: 3px;
+            font-size: 11px;
+            font-weight: bold;
+        }
+
+        .status-syncing {
+            background: #fff3cd;
+            color: #856404;
+            border: 1px solid #ffeaa7;
+        }
+
+        .status-synced {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .status-error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        /* Loading spinner */
+        .spinner {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #3498db;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Pending sync badge */
+        .pending-sync-badge {
+            position: fixed;
+            top: 10px;
+            left: 10px;
+            background: #ffc107;
+            color: #212529;
+            padding: 5px 10px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: bold;
+            z-index: 1000;
+            display: none;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.7; }
+            100% { opacity: 1; }
+        }
+
+        /* Admin Password Change */
+        .admin-password-change {
+            background: #fff3e0;
+            border: 1px solid #ffcc80;
+            border-radius: 5px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+
+        /* Student permissions section */
+        .student-permissions {
+            background: #e8f5e9;
+            border: 1px solid #c8e6c9;
+            border-radius: 5px;
+            padding: 15px;
+            margin: 15px 0;
+        }
+
+        .permission-badge {
+            background: #4caf50;
+            color: white;
+            padding: 3px 8px;
+            border-radius: 3px;
+            font-size: 11px;
+            font-weight: bold;
+            margin-left: 5px;
+        }
+
+        /* Special status styles - Simple black color */
+        .status-ta, .status-sa {
+            font-weight: normal;
+            padding: 2px 6px;
+            border-radius: 3px;
+            color: #000;
+        }
+
+        .status-ta-cell {
+            color: #000;
+        }
+
+        .status-sa-cell {
+            color: #000;
+        }
+
+        .quick-action-buttons {
+            display: flex;
+            gap: 5px;
+            margin-top: 10px;
+            flex-wrap: wrap;
+        }
+
+        .quick-action-buttons button {
+            padding: 6px 12px;
+            font-size: 12px;
+            border: none;
+            border-radius: 3px;
+            cursor: pointer;
+        }
+
+        .mark-all-ta-btn {
+            background: #ffc107;
+            color: #212529;
+        }
+
+        .delete-all-btn {
+            background: #dc3545;
+            color: white;
+        }
+
+        /* Print styles */
+        @media print {
+            body {
+                margin: 0;
+                font-size: 10pt;
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+                background: white;
+            }
+
+            .no-print {
+                display: none !important;
+            }
+
+            
+    .header {
+        display: flex !important;
+        flex-direction: row !important;
+        align-items: center !important;
+        justify-content: center !important;
+        text-align: center !important;
+        border-bottom: none !important;
+        padding-bottom: 5px !important;
+        width: 100% !important;
+        gap: 15px !important; /* Space between image and text block */
+    }
+    
+    .header img {
+        height: 50px !important;
+        margin: 0 !important; /* Remove all margins */
+        flex-shrink: 0 !important; /* Don't let image shrink */
+    }
+    
+    .header-content {
+        display: block !important; /* Change from flex to block */
+        text-align: center !important; /* Change from left to center */
+        max-width: 300px !important; /* Control width of text block */
+    }
+    
+    .header-content .title {
+        font-size: 16pt !important;
+        margin-bottom: 2px !important;
+        line-height: 1.1 !important;
+        text-align: center !important; /* Change from left to center */
+    }
+    
+    .header-content .subtitle {
+        font-size: 10pt !important;
+        margin-bottom: 1px !important;
+        line-height: 1.1 !important;
+        text-align: center !important; /* Change from left to center */
+    }
+
+            .table-container {
+                overflow: visible;
+                padding: 0;
+            }
+
+            table {
+                font-size: 8pt !important;
+                page-break-inside: avoid !important;
+                border: 1px solid #000 !important;
+                width: 100% !important;
+                margin: 0 !important;
+            }
+
+            th, td {
+                border: 1px solid #000 !important;
+                padding: 3px !important;
+            }
+
+            @page {
+                margin: 10mm;
+                size: A4 landscape;
+            }
+
+            html, body {
+                height: auto !important;
+                overflow: visible !important;
+            }
+
+            .teacher-name {
+                font-size: 9pt !important;
+            }
+
+            .bottom-row {
+                background: #f2f2f2 !important;
+                -webkit-print-color-adjust: exact;
+            }
+
+            .print-date {
+                display: block;
+                text-align: right;
+                font-size: 8pt;
+                margin-bottom: 5px;
+            }
+        }
+
+        /* Responsive adjustments */
+        @media (max-width: 768px) {
+            .login-container {
+                margin: 20px;
+                padding: 15px;
+            }
+
+            .header {
+                flex-direction: column;
+                text-align: center;
+            }
+
+            .header img {
+                margin-right: 0;
+                margin-bottom: 8px;
+            }
+
+            .header-content {
+                text-align: center;
+            }
+
+            .form-box {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .form-box label {
+                width: 100%;
+                text-align: left;
+                margin-bottom: 2px;
+            }
+
+            .form-box input,
+            .form-box select,
+            .form-box button {
+                width: 100%;
+                margin: 2px 0;
+            }
+
+            table {
+                font-size: 10px;
+            }
+
+            th, td {
+                padding: 3px;
+            }
+
+            .edit-actions {
+                flex-direction: column;
+            }
+
+            .faculty-list {
+                grid-template-columns: 1fr;
+            }
+
+            .quick-action-buttons {
+                flex-direction: column;
+            }
+
+            .quick-action-buttons button {
+                width: 100%;
+            }
+        }
+
+        /* Delete all confirmation modal */
+        .confirm-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.7);
+            z-index: 3000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .confirm-content {
+            background: white;
+            padding: 20px;
+            border-radius: 5px;
+            width: 90%;
+            max-width: 400px;
+        }
+
+        .confirm-buttons {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+            justify-content: flex-end;
+        }
+
+        .confirm-buttons button {
+            padding: 8px 20px;
+            border: none;
+            border-radius: 3px;
+            cursor: pointer;
+        }
+
+        .confirm-buttons .btn-danger {
+            background: #dc3545;
+            color: white;
+        }
+
+        .confirm-buttons .btn-secondary {
+            background: #6c757d;
+            color: white;
+        }
+
+        /* Delete options modal */
+        .delete-options-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.7);
+            z-index: 3000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .delete-options-content {
+            background: white;
+            padding: 20px;
+            border-radius: 5px;
+            width: 90%;
+            max-width: 500px;
+        }
+
+        .delete-options {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .delete-option {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 5px;
+            border: 1px solid #dee2e6;
+        }
+
+        .delete-option h4 {
+            margin: 0 0 10px 0;
+            color: #dc3545;
+        }
+
+        .delete-option-buttons {
+            display: flex;
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .delete-option-buttons button {
+            padding: 8px 15px;
+            font-size: 12px;
+        }
+
+        .cell-input {
+            width: 100%;
+            height: 100%;
+            border: none;
+            background: transparent;
+            text-align: center;
+            font-size: 12px;
+            outline: none;
+            font-family: inherit;
+            color: #000;
+        }
+
+        /* Special status dropdown option */
+        .special-status-option {
+            font-weight: bold;
+            color: #000;
+        }
+
+        .saturday-option {
+            color: #000;
+        }
+
+        .holiday-option {
+            color: #000;
+        }
+
+        .no-class-option {
+            color: #000;
+        }
+
+        /* Real-time Indicator - NEW */
+        .realtime-indicator {
+            display: none !important;
+            position: fixed;
+            top: 50px;
+            left: 10px;
+            background: #17a2b8;
+            color: white;
+            padding: 5px 10px;
+            border-radius: 20px;
+            font-size: 10px;
+            z-index: 1000;
+            animation: blink 2s infinite;
+        }
+
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+
+        /* Table Info - NEW */
+        .table-info {
+            background: white;
+            padding: 10px 15px;
+            border-radius: 5px;
+            margin: 10px 0;
+            border: 1px solid #dee2e6;
+            font-size: 12px;
+            color: #666;
+        }
+
+        /* Notification styles - NEW */
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 15px 20px;
+            border-radius: 5px;
+            z-index: 10000;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+            animation: slideIn 0.3s ease;
+            max-width: 300px;
+            font-size: 14px;
+        }
+
+        .notification.success {
+            background: #28a745;
+            color: white;
+        }
+
+        .notification.error {
+            background: #dc3545;
+            color: white;
+        }
+
+        .notification.warning {
+            background: #ffc107;
+            color: #212529;
+        }
+
+        .notification.info {
+            background: #17a2b8;
+            color: white;
+        }
+
+        @keyframes slideIn {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+
+        @keyframes slideOut {
+            from { transform: translateX(0); opacity: 1; }
+            to { transform: translateX(100%); opacity: 0; }
+        }
+        
+        /* Password prompt modal */
+        .password-prompt {
+            background: white;
+            padding: 25px;
+            border-radius: 8px;
+            width: 90%;
+            max-width: 400px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.2);
+        }
+        
+        .password-prompt input {
+            width: 100%;
+            padding: 12px;
+            margin: 15px 0;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 16px;
+        }
+        
+        .password-prompt-buttons {
+            display: flex;
+            gap: 10px;
+            justify-content: flex-end;
+            margin-top: 20px;
+        }
+
+        /* Tab Navigation */
+        .tab-navigation {
+            display: flex;
+            gap: 5px;
+            margin-bottom: 15px;
+            flex-wrap: wrap;
+            background: white;
+            padding: 10px;
+            border-radius: 5px;
+        }
+
+        .tab-btn {
+            padding: 8px 15px;
+            background: #e9ecef;
+            border: none;
+            border-radius: 3px;
+            cursor: pointer;
+            font-size: 13px;
+            color: #495057;
+            transition: all 0.2s;
+        }
+
+        .tab-btn:hover {
+            background: #dee2e6;
+        }
+
+        .tab-btn.active {
+            background: #007bff;
+            color: white;
+        }
+
+        /* Hidden class indicator */
+        .hidden-class {
+            opacity: 0.6;
+            position: relative;
+        }
+
+        .hidden-class::after {
+            content: " (Hidden)";
+            color: #dc3545;
+            font-size: 10px;
+            font-weight: normal;
+        }
+
+        /* Hide class checkbox */
+        .hide-class-checkbox {
+            margin-left: 10px;
+            transform: scale(0.8);
+        }
+
+        /* Class visibility toggle */
+        .visibility-toggle {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            font-size: 11px;
+            margin-left: 10px;
+        }
+    </style>
+</head>
+<body>
+
+<!-- Login Page -->
+<div id="loginPage">
+    <div class="login-container">
+        <div class="login-header">
+            <img src="https://media.edusanjal.com/__sized__/logos/myagdi-multiple-campus-thumbnail-200x200-70.jpg" alt="Campus Logo">
+            <div class="title">MYAGDI MULTIPLE CAMPUS</div>
+            <div class="subtitle">Beni, Myagdi</div>
+            <div class="subtitle">Teacher Attendance System (Cloud)</div>
+        </div>
+
+        <div class="mode-toggle">
+            <button class="mode-btn active" onclick="setLoginMode('student')">Student Login</button>
+            <button class="mode-btn" onclick="setLoginMode('admin')">Admin Login</button>
+        </div>
+
+        <div id="studentLoginForm" class="login-form">
+            <select id="studentFaculty">
+                <option value="">Select Faculty/Class</option>
+                <!-- Faculties will be loaded dynamically -->
+            </select>
+
+            <input type="password" id="studentPassword" placeholder="Enter Password">
+
+            <button onclick="studentLogin()">Login as Student</button>
+        </div>
+
+        <div id="adminLoginForm" class="login-form" style="display: none;">
+            <input type="email" id="adminEmail" placeholder="Admin Email">
+            <input type="password" id="adminPassword" placeholder="Admin Password">
+            <button onclick="adminLogin()">Login as Admin</button>
+        </div>
+
+        <div class="login-options">
+            <small id="syncStatus" class="status-synced">● Connected to Cloud</small>
+        </div>
+    </div>
+</div>
+
+<!-- Pending Sync Badge -->
+<div class="pending-sync-badge" id="pendingSyncBadge">
+    <span id="pendingCount">0</span> pending sync
+</div>
+
+<!-- Real-time Indicator -->
+<div class="realtime-indicator" id="realtimeIndicator" style="display: none;">
+    ● Real-time Active
+</div>
+
+<!-- Password Prompt Modal -->
+<div id="passwordPromptModal" class="modal" style="display: none;">
+    <div class="password-prompt">
+        <h3 id="passwordPromptTitle">Enter Password to Confirm</h3>
+        <p id="passwordPromptMessage">Please enter the faculty password to confirm this action:</p>
+        <input type="password" id="confirmPasswordInput" placeholder="Enter password">
+        <div class="password-prompt-buttons">
+            <button class="btn-secondary" onclick="cancelPasswordPrompt()">Cancel</button>
+            <button class="btn-danger" onclick="confirmWithPassword()">Confirm</button>
+        </div>
+    </div>
+</div>
+
+<!-- Delete All Confirmation Modal -->
+<div id="deleteAllModal" class="confirm-modal">
+    <div class="confirm-content">
+        <h3>Delete All Records</h3>
+        <p id="deleteAllMessage">Are you sure you want to delete all attendance records?</p>
+        <div class="confirm-buttons">
+            <button class="btn-danger" onclick="confirmDeleteAll()">Delete All</button>
+            <button class="btn-secondary" onclick="cancelDeleteAll()">Cancel</button>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Record Confirmation Modal -->
+<div id="deleteRecordModal" class="confirm-modal">
+    <div class="confirm-content">
+        <h3>Delete Record</h3>
+        <p id="deleteRecordMessage">Are you sure you want to delete this record?</p>
+        <div class="confirm-buttons">
+            <button class="btn-danger" onclick="confirmDeleteRecord()">Delete</button>
+            <button class="btn-secondary" onclick="cancelDeleteRecord()">Cancel</button>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Options Modal -->
+<div id="deleteOptionsModal" class="delete-options-modal">
+    <div class="delete-options-content">
+        <h3>Delete Data Options</h3>
+        <p>Choose what you want to delete:</p>
+
+        <div class="delete-options">
+            <div class="delete-option">
+                <h4>Delete Specific Record</h4>
+                <p>Delete attendance for a specific teacher on a specific date.</p>
+                <div class="delete-option-buttons">
+                    <button class="btn-danger" onclick="openDeleteSingleRecordForm()">Delete Specific Record</button>
+                </div>
+            </div>
+
+            <div class="delete-option">
+                <h4>Delete All Records for a Specific Date</h4>
+                <p>Delete all attendance records for a particular date.</p>
+                <div class="delete-option-buttons">
+                    <button class="btn-danger" onclick="openDeleteDateForm()">Delete by Date</button>
+                </div>
+            </div>
+
+            <div class="delete-option">
+                <h4>Delete All Records for Selected Month</h4>
+                <p>Delete ALL attendance records for the currently selected month.</p>
+                <div class="delete-option-buttons">
+                    <button class="btn-danger" onclick="deleteAllRecordsForMonth()">Delete Month Records</button>
+                </div>
+            </div>
+
+            <div class="delete-option" id="deleteAllOption">
+                <h4>Delete All Records</h4>
+                <p>Delete ALL attendance records for this faculty.</p>
+                <div class="delete-option-buttons">
+                    <button class="btn-danger" onclick="confirmDeleteAllRecords()">Delete All Records</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="confirm-buttons">
+            <button class="btn-secondary" onclick="closeDeleteOptions()">Cancel</button>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Single Record Form Modal -->
+<div id="deleteSingleRecordModal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3>Delete Specific Record</h3>
+            <span class="close-modal" onclick="closeDeleteSingleRecordModal()">&times;</span>
+        </div>
+        <div class="form-box">
+            <label>Date (BS):</label>
+            <input type="text" id="deleteRecordDate" placeholder="Select or type Nepali date (YYYY-MM-DD)">
+
+            <label>Teacher:</label>
+            <select id="deleteRecordTeacher">
+                <!-- Teachers will be loaded here -->
+            </select>
+
+            <div class="edit-actions">
+                <button onclick="deleteSpecificRecord()" class="btn-danger">Delete This Record</button>
+                <button onclick="closeDeleteSingleRecordModal()" class="btn-secondary">Cancel</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Date Records Form Modal -->
+<div id="deleteDateModal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3>Delete All Records for Date</h3>
+            <span class="close-modal" onclick="closeDeleteDateModal()">&times;</span>
+        </div>
+        <div class="form-box">
+            <label>Date (BS):</label>
+            <input type="text" id="deleteDateInput" placeholder="Select or type Nepali date (YYYY-MM-DD)">
+
+            <div id="dateRecordsPreview" style="margin-top: 15px; font-size: 12px; color: #666;"></div>
+
+            <div class="edit-actions">
+                <button onclick="deleteAllRecordsForDate()" class="btn-danger">Delete All Records for this Date</button>
+                <button onclick="closeDeleteDateModal()" class="btn-secondary">Cancel</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Edit Modal -->
+<div id="editModal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3>Edit Attendance Record</h3>
+            <span class="close-modal" onclick="closeModal()">&times;</span>
+        </div>
+        <div class="form-box">
+            <label>Date (BS):</label>
+            <input type="text" id="editDate">
+
+            <label>Teacher:</label>
+            <input type="text" id="editTeacher" readonly>
+
+            <label>Enter Time:</label>
+            <input type="time" id="editEnter">
+
+            <label>Exit Time:</label>
+            <input type="time" id="editExit">
+
+            <div class="edit-actions">
+                <button onclick="updateRecord()" class="btn-success" id="updateRecordBtn">Update Record</button>
+                <button onclick="openDeleteRecordConfirm()" class="btn-danger" id="deleteRecordBtn">Delete Record</button>
+                <button onclick="closeModal()" class="btn-secondary">Cancel</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Admin Panel -->
+<div id="adminPanel" class="admin-panel">
+    <button class="logout-btn no-print" onclick="logout()">Logout</button>
+    <div class="status-indicator status-synced" id="adminSyncStatus" style="position: fixed; top: 50px; right: 10px; z-index: 1000;">
+        ● Cloud Synced
+    </div>
+
+    <div class="header">
+        <img src="https://media.edusanjal.com/__sized__/logos/myagdi-multiple-campus-thumbnail-200x200-70.jpg" alt="Campus Logo">
+        <div class="header-content">
+            <div class="title">MYAGDI MULTIPLE CAMPUS</div>
+            <div class="subtitle">Beni, Myagdi</div>
+            <div class="subtitle" id="adminCurrentFaculty"></div>
+            <div class="subtitle">Admin: <span id="adminEmailDisplay"></span></div>
+        </div>
+    </div>
+
+    <!-- Tab Navigation -->
+    <div class="tab-navigation no-print" id="adminTabs">
+        <button class="tab-btn active" onclick="showTab('attendance')">📊 Attendance</button>
+        <button class="tab-btn" onclick="showTab('facultyManagement')">🏛️ Faculties</button>
+        <button class="tab-btn" onclick="showTab('passwordManagement')">🔑 Passwords</button>
+        <button class="tab-btn" onclick="showTab('adminManagement')">👑 Admin</button>
+    </div>
+
+    <!-- Attendance Tab -->
+    <div id="attendanceTab" class="tab-content">
+        <!-- Faculty Selection -->
+        <div class="form-box no-print">
+            <label>Select Faculty:</label>
+            <select id="adminFaculty" onchange="loadFacultyData()">
+                <option value="">Select Faculty to Manage</option>
+                <!-- Faculties will be loaded dynamically -->
+            </select>
+
+            <button onclick="forceSyncNow()" class="btn-secondary" id="syncButton">Force Sync Now</button>
+        </div>
+
+        <!-- Teacher Management -->
+        <div class="teacher-management no-print" id="teacherManagement" style="display: none;">
+            <h3>Manage Teachers for <span id="facultyName"></span></h3>
+
+            <div class="form-box">
+                <input type="text" id="newTeacherName" placeholder="Enter teacher name" style="flex: 1;">
+                <button onclick="addTeacher()" class="btn-success">Add Teacher</button>
+            </div>
+
+            <div class="teacher-list" id="teacherList">
+                <!-- Teachers will be listed here -->
+            </div>
+        </div>
+
+        <!-- Attendance Form -->
+        <div class="form-box no-print" id="attendanceForm" style="display: none;">
+            <label>Date (BS):</label>
+            <div class="date-input-container">
+                <input type="text" id="adminDate" placeholder="Select or type Nepali date (YYYY-MM-DD)" onchange="handleDateChange('adminDate')">
+                <button class="today-btn" onclick="setTodayDate('adminDate')">Today</button>
+            </div>
+
+            <label>Teacher:</label>
+            <select id="adminTeacher">
+                <!-- Teachers will be loaded here -->
+            </select>
+
+            <label>Enter Time:</label>
+            <input type="time" id="adminEnter">
+
+            <label>Exit Time:</label>
+            <input type="time" id="adminExit">
+
+            <button onclick="addRecord()" class="btn-primary">Add Record</button>
+            <button onclick="showDeleteOptions()" class="btn-danger">Delete Data</button>
+            <button onclick="printReport()" class="btn-secondary">Print Report</button>
+        </div>
+
+        <!-- Table Info -->
+        <div class="table-info no-print" id="adminTableInfo">
+            Showing records for selected date
+        </div>
+
+        <!-- Print date -->
+        <div class="print-date no-print" id="printDate"></div>
+
+        <!-- Attendance Table -->
+        <div class="table-container">
+            <table id="attendanceTable">
+                <!-- Table will be generated here -->
+            </table>
+        </div>
+    </div>
+
+    <!-- Faculty Management Tab -->
+    <div id="facultyManagementTab" class="tab-content" style="display: none;">
+        <div class="faculty-management no-print">
+            <h3>Manage Faculties & Classes</h3>
+
+            <div class="form-box">
+                <input type="text" id="newFacultyName" placeholder="Enter Faculty Name" style="flex: 1;">
+                <button onclick="addFaculty()" class="btn-success">Add Faculty</button>
+                <button onclick="sortFacultiesByName()" class="btn-info">Sort by Name</button>
+            </div>
+
+            <div class="form-box">
+                <select id="facultyForClass">
+                    <option value="">Select Faculty</option>
+                </select>
+                <input type="text" id="newClassName" placeholder="Enter Class Name">
+                <button onclick="addClass()" class="btn-success">Add Class</button>
+            </div>
+
+            <div class="faculty-list" id="facultyList">
+                <!-- Faculties and classes will be listed here -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Password Management Tab -->
+    <div id="passwordManagementTab" class="tab-content" style="display: none;">
+        <div class="password-management no-print">
+            <h3>Manage Student Passwords</h3>
+
+            <div class="form-box">
+                <select id="passwordFacultySelect" onchange="loadClassesForPassword()">
+                    <option value="">Select Faculty</option>
+                </select>
+
+                <select id="passwordClassSelect" onchange="showCurrentPassword()">
+                    <option value="">Select Class</option>
+                </select>
+
+                <input type="password" id="newPassword" placeholder="New Password">
+                <input type="password" id="confirmPassword" placeholder="Confirm Password">
+                <button onclick="changeClassPassword()" class="btn-success">Change Password</button>
+                <button onclick="generateRandomPassword()" class="btn-info">Generate Password</button>
+            </div>
+
+            <div id="currentPasswordInfo" style="margin-top: 10px; font-size: 12px; color: #666;"></div>
+        </div>
+    </div>
+
+    <!-- Admin Management Tab -->
+    <div id="adminManagementTab" class="tab-content" style="display: none;">
+        <div class="admin-password-change no-print">
+            <h3>Admin Account Management</h3>
+
+            <div class="form-box">
+                <input type="email" id="newAdminEmail" placeholder="New Admin Email">
+                <input type="password" id="newAdminPassword" placeholder="New Password">
+                <input type="password" id="confirmAdminPassword" placeholder="Confirm Password">
+                <button onclick="createAdminAccount()" class="btn-success">Create Admin</button>
+                <button onclick="changeCurrentAdminPassword()" class="btn-warning">Change My Password</button>
+            </div>
+
+            <div id="adminMessage" style="margin-top: 10px; font-size: 12px; color: #666;"></div>
+
+            <div class="faculty-management" style="margin-top: 20px;">
+                <h4>Admin Accounts</h4>
+                <div id="adminAccountsList">
+                    Loading admin accounts...
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Student Panel -->
+<div id="studentPanel" class="student-panel">
+    <button class="logout-btn no-print" onclick="logout()">Logout</button>
+    <div class="status-indicator status-synced" id="studentSyncStatus" style="position: fixed; top: 50px; right: 10px; z-index: 1000;">
+        ● Cloud Synced
+    </div>
+
+    <div class="header">
+        <img src="https://media.edusanjal.com/__sized__/logos/myagdi-multiple-campus-thumbnail-200x200-70.jpg" alt="Campus Logo">
+        <div class="header-content">
+            <div class="title">MYAGDI MULTIPLE CAMPUS</div>
+            <div class="subtitle" id="studentFacultyTitle">Teacher's Attendance</div>
+            <div class="subtitle" id="studentCurrentFaculty"></div>
+        </div>
+    </div>
+
+    <!-- Student Attendance Form -->
+    <div class="student-permissions no-print">
+        <div class="form-box">
+            <label>Date (BS):</label>
+            <div class="date-input-container">
+                <input type="text" id="studentDate" placeholder="Select or type Nepali date (YYYY-MM-DD)" onchange="handleDateChange('studentDate')">
+                <button class="today-btn" onclick="setTodayDate('studentDate')">Today</button>
+            </div>
+
+            <label>Teacher:</label>
+            <select id="studentTeacher">
+                <!-- Teachers will be loaded here -->
+            </select>
+
+            <label>Enter Time:</label>
+            <input type="time" id="studentEnter">
+
+            <label>Exit Time:</label>
+            <input type="time" id="studentExit">
+
+            <button onclick="addStudentRecord()" class="btn-primary">Add Record</button>
+            <button onclick="showDeleteOptions()" class="btn-danger">Delete Data</button>
+            <button onclick="printReport()" class="btn-secondary">Print Report</button>
+        </div>
+    </div>
+
+    <!-- Table Info -->
+    <div class="table-info no-print" id="studentTableInfo">
+        Showing records for selected date
+    </div>
+
+    <!-- Print date -->
+    <div class="print-date no-print" id="studentPrintDate"></div>
+
+    <!-- Attendance Table -->
+    <div class="table-container">
+        <table id="studentAttendanceTable">
+            <!-- Table will be generated here -->
+        </table>
+    </div>
+</div>
+
+<!-- Nepali Datepicker -->
+<script src="https://nepalidatepicker.sajanmaharjan.com.np/v5/nepali.datepicker/js/nepali.datepicker.v5.0.6.min.js"></script>
+
+<script>
+    // Firebase Configuration
+    const firebaseConfig = {
+        apiKey: "AIzaSyCDWDQxKbTPkPf-oziP1TR1GlK57uO5dLY",
+        authDomain: "otp-project-for-login.firebaseapp.com",
+        projectId: "otp-project-for-login",
+        storageBucket: "otp-project-for-login.firebasestorage.app",
+        messagingSenderId: "106970909669",
+        appId: "1:106970909669:web:bb99b8d29c51e6efb27d0c",
+        measurementId: "G-9TS8JLQE6X"
+    };
+
+    // Initialize Firebase
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+    const auth = firebase.auth();
+
+    // Database structure
+    let facultyDatabase = {
+        faculties: {
+            'bbs': {
+                name: 'BBS Faculty',
+                classes: ['bbs_1', 'bbs_2', 'bbs_3', 'bbs_4'],
+                classNames: {
+                    'bbs_1': 'BBS 1st Year',
+                    'bbs_2': 'BBS 2nd Year',
+                    'bbs_3': 'BBS 3rd Year',
+                    'bbs_4': 'BBS 4th Year'
+                },
+                hiddenClasses: [], // NEW: Track hidden classes
+                order: 1
+            },
+            'bed': {
+                name: 'B.Ed Faculty',
+                classes: ['bed_1', 'bed_2', 'bed_3', 'bed_4'],
+                classNames: {
+                    'bed_1': 'B.Ed 1st Year',
+                    'bed_2': 'B.Ed 2nd Year',
+                    'bed_3': 'B.Ed 3rd Year',
+                    'bed_4': 'B.Ed 4th Year'
+                },
+                hiddenClasses: [], // NEW: Track hidden classes
+                order: 2
+            }
+        },
+
+        passwords: {
+            'bbs_1': 'bbs123',
+            'bbs_2': 'bbs456',
+            'bbs_3': 'bbs789',
+            'bbs_4': 'bbs000',
+            'bed_1': 'bed123',
+            'bed_2': 'bed456',
+            'bed_3': 'bed789',
+            'bed_4': 'bed000'
+        },
+
+        teachers: {
+            'bbs_1': ['Prof. Ram Sharma', 'Dr. Sita Devi', 'Mr. Krishna Bahadur', 'Ms. Gita Kumari', 'Prof. Hari Prasad', 'Mr. Ramesh Thapa'],
+            'bbs_2': ['Dr. Shyam Kumar', 'Ms. Radha Devi', 'Mr. Bal Krishna', 'Prof. Uma Devi', 'Dr. Mohan Prasad', 'Ms. Sabita Sharma'],
+            'bbs_3': ['Prof. Gopal Das', 'Mr. Ramesh Thapa', 'Dr. Bimala K.C.', 'Dr. Khem Raj', 'Mr. Santosh Poudel', 'Ms. Anjali Gurung'],
+            'bbs_4': ['Prof. Bimala K.C.', 'Dr. Khem Raj', 'Mr. Santosh Poudel', 'Ms. Anjali Gurung', 'Prof. Gyanendra Sharma', 'Dr. Laxmi Paudel'],
+            'bed_1': ['Prof. Gyanendra Sharma', 'Dr. Laxmi Paudel', 'Mr. Dinesh Thapa', 'Ms. Sarita Bhandari', 'Dr. Prakash Kumar', 'Ms. Sunita Rai'],
+            'bed_2': ['Dr. Prakash Kumar', 'Ms. Sunita Rai', 'Prof. Madhav Prasad', 'Prof. Kalpana Sharma', 'Dr. Rajendra K.C.', 'Mr. Suresh Basnet'],
+            'bed_3': ['Prof. Kalpana Sharma', 'Dr. Rajendra K.C.', 'Mr. Suresh Basnet', 'Dr. Kamala Devi', 'Prof. Rameshwor Khanal', 'Ms. Puja Thapa'],
+            'bed_4': ['Dr. Kamala Devi', 'Prof. Rameshwor Khanal', 'Ms. Puja Thapa', 'Er. Binod Sharma', 'Mr. Rajan Bhattarai', 'Ms. Priya Joshi']
+        },
+
+        attendance: {},
+        lastUpdate: {}
+    };
+
+    // Special status identifiers
+    const SPECIAL_STATUS = {
+        SATURDAY: -1,
+        HOLIDAY: -2,
+        TA: -3
+    };
+
+    // Current state
+    let currentUser = null;
+    let currentFaculty = null;
+    let currentMode = 'student';
+    let editingRecord = null;
+    let editingTeacherIndex = null;
+    let editingCell = null;
+    let isSyncing = false;
+    let lastSyncTime = null;
+    let pendingSyncChanges = [];
+    let isOnline = true;
+    let currentAdminEmail = null;
+    let realTimeListener = null;
+    let updateDebounceTimer = null;
+    let deleteRecordInfo = null;
+    let deleteAllInfo = null;
+    let isRealTimeActive = false;
+    let selectedDateCache = {};
+    let currentTeacherIndex = 0;
+    let isEditingTableCell = false;
+    let pendingPasswordAction = null;
+
+    // Initialize
+    window.onload = async function() {
+        await initFirebase();
+        setLoginMode('student');
+        initializeDatepickers();
+        loadLoginFaculties();
+        updateOnlineStatus();
+        window.addEventListener('online', handleOnline);
+        window.addEventListener('offline', handleOffline);
+        checkPendingSync();
+        checkAuthState();
+        restoreSession();
+        setupAutoSave();
+        
+        setInterval(checkForRealTimeUpdates, 2000);
+    };
+
+    // Setup auto-save
+    function setupAutoSave() {
+        const studentForm = document.querySelector('.student-permissions .form-box');
+        if (studentForm) {
+            const inputs = studentForm.querySelectorAll('input, select');
+            inputs.forEach(input => {
+                input.addEventListener('change', function() {
+                    saveFormState();
+                });
+            });
+        }
+
+        const adminForm = document.querySelector('#attendanceForm');
+        if (adminForm) {
+            const inputs = adminForm.querySelectorAll('input, select');
+            inputs.forEach(input => {
+                input.addEventListener('change', function() {
+                    saveFormState();
+                });
+            });
+        }
+    }
+
+    // Save form state
+    function saveFormState() {
+        if (currentUser === 'student' && currentFaculty) {
+            const formState = {
+                date: document.getElementById('studentDate')?.value || '',
+                teacher: document.getElementById('studentTeacher')?.value || '',
+                enter: document.getElementById('studentEnter')?.value || '',
+                exit: document.getElementById('studentExit')?.value || ''
+            };
+            localStorage.setItem(`form_state_${currentFaculty}`, JSON.stringify(formState));
+        } else if (currentUser === 'admin' && currentFaculty) {
+            const formState = {
+                date: document.getElementById('adminDate')?.value || '',
+                teacher: document.getElementById('adminTeacher')?.value || '',
+                enter: document.getElementById('adminEnter')?.value || '',
+                exit: document.getElementById('adminExit')?.value || ''
+            };
+            localStorage.setItem(`admin_form_state_${currentFaculty}`, JSON.stringify(formState));
+        }
+    }
+
+    // Restore form state
+    function restoreFormState() {
+        if (currentUser === 'student' && currentFaculty) {
+            const savedState = localStorage.getItem(`form_state_${currentFaculty}`);
+            if (savedState) {
+                try {
+                    const state = JSON.parse(savedState);
+                    if (document.getElementById('studentDate')) {
+                        document.getElementById('studentDate').value = state.date;
+                        selectedDateCache['studentDate'] = state.date;
+                    }
+                    if (document.getElementById('studentTeacher')) document.getElementById('studentTeacher').value = state.teacher;
+                    if (document.getElementById('studentEnter')) document.getElementById('studentEnter').value = state.enter;
+                    if (document.getElementById('studentExit')) document.getElementById('studentExit').value = state.exit;
+                } catch (e) {
+                    console.error('Error restoring form state:', e);
+                }
+            }
+        } else if (currentUser === 'admin' && currentFaculty) {
+            const savedState = localStorage.getItem(`admin_form_state_${currentFaculty}`);
+            if (savedState) {
+                try {
+                    const state = JSON.parse(savedState);
+                    if (document.getElementById('adminDate')) {
+                        document.getElementById('adminDate').value = state.date;
+                        selectedDateCache['adminDate'] = state.date;
+                    }
+                    if (document.getElementById('adminTeacher')) document.getElementById('adminTeacher').value = state.teacher;
+                    if (document.getElementById('adminEnter')) document.getElementById('adminEnter').value = state.enter;
+                    if (document.getElementById('adminExit')) document.getElementById('adminExit').value = state.exit;
+                } catch (e) {
+                    console.error('Error restoring admin form state:', e);
+                }
+            }
+        }
+    }
+
+    // Handle date change
+    function handleDateChange(inputId) {
+        const dateInput = document.getElementById(inputId);
+        if (dateInput && dateInput.value) {
+            selectedDateCache[inputId] = dateInput.value;
+            updateTableForDate(inputId);
+            updateTableInfo();
+        }
+    }
+
+    // Update table for selected date
+    function updateTableForDate(inputId) {
+        if (currentUser && currentFaculty) {
+            if (currentUser === 'admin') {
+                updateAdminTable();
+            } else if (currentUser === 'student') {
+                updateStudentTable();
+            }
+        }
+    }
+
+    // Update table info
+    function updateTableInfo() {
+        let date = '';
+        if (currentUser === 'admin') {
+            date = document.getElementById('adminDate')?.value || '';
+            const info = document.getElementById('adminTableInfo');
+            if (info && date) {
+                info.textContent = `Showing records for month: ${getMonthName(date)}`;
+            }
+        } else if (currentUser === 'student') {
+            date = document.getElementById('studentDate')?.value || '';
+            const info = document.getElementById('studentTableInfo');
+            if (info && date) {
+                info.textContent = `Showing records for month: ${getMonthName(date)}`;
+            }
+        }
+    }
+
+    // Get month name from date
+    function getMonthName(dateString) {
+        if (!dateString) return '';
+        const parts = dateString.split('-');
+        if (parts.length >= 2) {
+            const year = parts[0];
+            const month = parseInt(parts[1]);
+            const monthNames = [
+                'Baishakh', 'Jestha', 'Ashadh', 'Shrawan', 'Bhadra', 'Ashwin',
+                'Kartik', 'Mangsir', 'Poush', 'Magh', 'Falgun', 'Chaitra'
+            ];
+            const monthName = monthNames[month - 1] || `Month ${month}`;
+            return `${year} - ${monthName}`;
+        }
+        return dateString;
+    }
+
+    // Get month prefix from date
+    function getMonthPrefix(dateString) {
+        if (!dateString) return '';
+        const parts = dateString.split('-');
+        if (parts.length >= 2) {
+            return `${parts[0]}-${parts[1]}`;
+        }
+        return '';
+    }
+
+    // Initialize Firebase with real-time listener
+    async function initFirebase() {
+        try {
+            showSyncStatus('Connecting to Cloud...', 'syncing');
+
+            const doc = await db.collection('attendanceSystem').doc('facultyData').get();
+
+            if (doc.exists) {
+                const data = doc.data();
+
+                if (data.faculties) facultyDatabase.faculties = data.faculties;
+                if (data.teachers) facultyDatabase.teachers = data.teachers;
+                if (data.attendance) facultyDatabase.attendance = data.attendance;
+                if (data.passwords) facultyDatabase.passwords = data.passwords;
+
+                lastSyncTime = new Date();
+                console.log('Data loaded from Firebase');
+
+                saveAllData();
+                startRealTimeListener();
+
+            } else {
+                await saveDataToFirebase();
+                startRealTimeListener();
+            }
+
+            showSyncStatus('Connected to Cloud', 'synced');
+            document.getElementById('realtimeIndicator').style.display = 'block';
+            isRealTimeActive = true;
+
+        } catch (error) {
+            console.error('Firebase init error:', error);
+            showSyncStatus('Offline Mode', 'error');
+            loadAllData();
+        }
+    }
+
+    // Start real-time listener
+    function startRealTimeListener() {
+        if (realTimeListener) {
+            realTimeListener();
+        }
+        
+        realTimeListener = db.collection('attendanceSystem').doc('facultyData')
+            .onSnapshot(async (doc) => {
+                if (doc.exists) {
+                    const data = doc.data();
+                    console.log('Real-time update received from Firestore');
+                    
+                    if (data.faculties) facultyDatabase.faculties = data.faculties;
+                    if (data.teachers) facultyDatabase.teachers = data.teachers;
+                    if (data.attendance) facultyDatabase.attendance = data.attendance;
+                    if (data.passwords) facultyDatabase.passwords = data.passwords;
+                    
+                    if (currentUser && currentFaculty) {
+                        if (currentUser === 'admin') {
+                            updateAdminTable();
+                        } else if (currentUser === 'student') {
+                            updateStudentTable();
+                        }
+                    }
+                    
+                    lastSyncTime = new Date();
+                    showSyncStatus('Real-time sync active', 'synced');
+                    saveAllData();
+                }
+            }, (error) => {
+                console.error('Real-time listener error:', error);
+                showSyncStatus('Real-time disconnected', 'error');
+                document.getElementById('realtimeIndicator').style.display = 'none';
+                isRealTimeActive = false;
+            });
+    }
+
+    // Check for real-time updates
+    function checkForRealTimeUpdates() {
+        if (!isRealTimeActive && isOnline) {
+            startRealTimeListener();
+        }
+    }
+
+    // Save data to Firebase
+    async function saveDataToFirebase() {
+        if (isSyncing) return false;
+
+        try {
+            isSyncing = true;
+            showSyncStatus('Syncing to Cloud...', 'syncing');
+
+            facultyDatabase.lastUpdate = {
+                timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+                user: currentAdminEmail || currentUser || 'system',
+                clientTime: new Date().toISOString()
+            };
+
+            await db.collection('attendanceSystem').doc('facultyData').set(facultyDatabase);
+
+            lastSyncTime = new Date();
+            isSyncing = false;
+            showSyncStatus('Synced to Cloud', 'synced');
+            clearPendingSync();
+            saveAllData();
+
+            return true;
+
+        } catch (error) {
+            isSyncing = false;
+            showSyncStatus('Sync failed', 'error');
+            console.error('Save error:', error);
+            return false;
+        }
+    }
+
+    // Force immediate sync
+    async function forceSyncNow() {
+        const syncBtn = document.getElementById('syncButton');
+        const originalText = syncBtn.innerHTML;
+        
+        try {
+            syncBtn.innerHTML = '<span class="spinner"></span> Syncing...';
+            syncBtn.disabled = true;
+            
+            await saveDataToFirebase();
+            
+            syncBtn.innerHTML = '✓ Synced';
+            setTimeout(() => {
+                syncBtn.innerHTML = originalText;
+                syncBtn.disabled = false;
+            }, 2000);
+        } catch (error) {
+            syncBtn.innerHTML = '✗ Failed';
+            setTimeout(() => {
+                syncBtn.innerHTML = originalText;
+                syncBtn.disabled = false;
+            }, 2000);
+        }
+    }
+
+    // Fast auto-save with debouncing
+    async function autoSaveToCloud() {
+        if (isSyncing || !isOnline) return;
+
+        if (updateDebounceTimer) {
+            clearTimeout(updateDebounceTimer);
+        }
+
+        updateDebounceTimer = setTimeout(async () => {
+            try {
+                await saveDataToFirebase();
+            } catch (error) {
+                console.error('Auto-save error:', error);
+            }
+            updateDebounceTimer = null;
+        }, 1000);
+    }
+
+    // Add pending change
+    function addPendingChange(change) {
+        change.timestamp = new Date().toISOString();
+        change.id = Date.now() + Math.random().toString(36).substr(2, 9);
+
+        let pending = JSON.parse(localStorage.getItem('pendingSync') || '[]');
+        pending.push(change);
+        localStorage.setItem('pendingSync', JSON.stringify(pending));
+
+        updatePendingBadge();
+    }
+
+    // Clear pending changes
+    function clearPendingSync() {
+        localStorage.removeItem('pendingSync');
+        updatePendingBadge();
+    }
+
+    // Get pending changes
+    function getPendingChanges() {
+        return JSON.parse(localStorage.getItem('pendingSync') || '[]');
+    }
+
+    // Update pending badge
+    function updatePendingBadge() {
+        const pending = getPendingChanges();
+        const badge = document.getElementById('pendingSyncBadge');
+        const count = document.getElementById('pendingCount');
+
+        if (pending.length > 0) {
+            count.textContent = pending.length;
+            badge.style.display = 'block';
+        } else {
+            badge.style.display = 'none';
+        }
+    }
+
+    // Sync pending changes
+    async function syncPendingChanges() {
+        const pending = getPendingChanges();
+        if (pending.length === 0 || !isOnline) return;
+
+        try {
+            for (const change of pending) {
+                applyPendingChange(change);
+            }
+
+            await saveDataToFirebase();
+
+            console.log(`Synced ${pending.length} pending changes`);
+        } catch (error) {
+            console.error('Error syncing pending changes:', error);
+        }
+    }
+
+    // Apply pending change
+    function applyPendingChange(change) {
+        switch (change.type) {
+            case 'ADD_RECORD':
+                if (!facultyDatabase.attendance[change.faculty]) {
+                    facultyDatabase.attendance[change.faculty] = {};
+                }
+                if (!facultyDatabase.attendance[change.faculty][change.date]) {
+                    facultyDatabase.attendance[change.faculty][change.date] = {};
+                }
+                facultyDatabase.attendance[change.faculty][change.date][change.teacherIndex] = change.record;
+                break;
+
+            case 'UPDATE_RECORD':
+                if (facultyDatabase.attendance[change.faculty] &&
+                    facultyDatabase.attendance[change.faculty][change.date]) {
+                    facultyDatabase.attendance[change.faculty][change.date][change.teacherIndex] = change.record;
+                }
+                break;
+
+            case 'DELETE_RECORD':
+                if (facultyDatabase.attendance[change.faculty] &&
+                    facultyDatabase.attendance[change.faculty][change.date]) {
+                    delete facultyDatabase.attendance[change.faculty][change.date][change.teacherIndex];
+
+                    if (Object.keys(facultyDatabase.attendance[change.faculty][change.date]).length === 0) {
+                        delete facultyDatabase.attendance[change.faculty][change.date];
+                    }
+                }
+                break;
+
+            case 'DELETE_ALL_RECORDS':
+                facultyDatabase.attendance[change.faculty] = {};
+                break;
+
+            case 'UPDATE_TEACHER':
+                if (facultyDatabase.teachers[change.faculty]) {
+                    facultyDatabase.teachers[change.faculty][change.teacherIndex] = change.newName;
+                }
+                break;
+
+            case 'CLEAR_DATA':
+                facultyDatabase.attendance[change.faculty] = {};
+                break;
+
+            case 'DELETE_DATE_RECORDS':
+                if (facultyDatabase.attendance[change.faculty]) {
+                    delete facultyDatabase.attendance[change.faculty][change.date];
+                }
+                break;
+
+            case 'DELETE_MONTH_RECORDS':
+                if (facultyDatabase.attendance[change.faculty]) {
+                    const dates = Object.keys(facultyDatabase.attendance[change.faculty]);
+                    dates.forEach(date => {
+                        if (date.startsWith(change.monthPrefix)) {
+                            delete facultyDatabase.attendance[change.faculty][date];
+                        }
+                    });
+                }
+                break;
+        }
+    }
+
+    // Check for pending sync
+    function checkPendingSync() {
+        const pending = getPendingChanges();
+        if (pending.length > 0) {
+            updatePendingBadge();
+            if (navigator.onLine) {
+                setTimeout(syncPendingChanges, 1000);
+            }
+        }
+    }
+
+    // Online/Offline handlers
+    function handleOnline() {
+        isOnline = true;
+        showSyncStatus('Online - Connected to Cloud', 'synced');
+        document.getElementById('realtimeIndicator').style.display = 'block';
+        isRealTimeActive = true;
+
+        setTimeout(syncPendingChanges, 2000);
+
+        if (currentUser) {
+            setTimeout(() => autoSaveToCloud(), 3000);
+        }
+        
+        startRealTimeListener();
+    }
+
+    function handleOffline() {
+        isOnline = false;
+        showSyncStatus('Offline - Working locally', 'error');
+        document.getElementById('realtimeIndicator').style.display = 'none';
+        isRealTimeActive = false;
+    }
+
+    function updateOnlineStatus() {
+        if (navigator.onLine) {
+            handleOnline();
+        } else {
+            handleOffline();
+        }
+    }
+
+    // Show sync status
+    function showSyncStatus(message, type = 'synced') {
+        const statusElement = document.getElementById('syncStatus');
+        const adminStatus = document.getElementById('adminSyncStatus');
+        const studentStatus = document.getElementById('studentSyncStatus');
+
+        if (statusElement) {
+            statusElement.textContent = '● ' + message;
+            statusElement.className = `status-indicator status-${type}`;
+        }
+        if (adminStatus) {
+            adminStatus.textContent = '● ' + message;
+            adminStatus.className = `status-indicator status-${type}`;
+        }
+        if (studentStatus) {
+            studentStatus.textContent = '● ' + message;
+            studentStatus.className = `status-indicator status-${type}`;
+        }
+    }
+
+    // Show notification
+    function showNotification(message, type = 'info') {
+        document.querySelectorAll('.notification').forEach(el => el.remove());
+        
+        const notification = document.createElement('div');
+        notification.className = `notification ${type}`;
+        notification.innerHTML = message;
+        notification.style.cssText = `
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 15px 20px;
+            border-radius: 5px;
+            z-index: 10000;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+            animation: slideIn 0.3s ease;
+            max-width: 300px;
+        `;
+        document.body.appendChild(notification);
+        
+        setTimeout(() => {
+            notification.style.animation = 'slideOut 0.3s ease';
+            setTimeout(() => {
+                if (notification.parentNode) {
+                    notification.parentNode.removeChild(notification);
+                }
+            }, 300);
+        }, 3000);
+    }
+
+    // Show password prompt
+    function showPasswordPrompt(title, message, action) {
+        pendingPasswordAction = action;
+        document.getElementById('passwordPromptTitle').textContent = title;
+        document.getElementById('passwordPromptMessage').textContent = message;
+        document.getElementById('confirmPasswordInput').value = '';
+        document.getElementById('passwordPromptModal').style.display = 'flex';
+    }
+
+    // Cancel password prompt
+    function cancelPasswordPrompt() {
+        document.getElementById('passwordPromptModal').style.display = 'none';
+        pendingPasswordAction = null;
+    }
+
+    // Confirm with password
+    function confirmWithPassword() {
+        const password = document.getElementById('confirmPasswordInput').value;
+        
+        if (!password) {
+            alert('Please enter password!');
+            return;
+        }
+
+        // Check if password is correct
+        const correctPassword = facultyDatabase.passwords[currentFaculty];
+        if (password !== correctPassword) {
+            alert('Incorrect password!');
+            return;
+        }
+
+        // Execute the pending action
+        if (pendingPasswordAction) {
+            if (pendingPasswordAction.type === 'DELETE_ALL_RECORDS') {
+                executeDeleteAllRecords();
+            } else if (pendingPasswordAction.type === 'DELETE_MONTH_RECORDS') {
+                executeDeleteMonthRecords();
+            }
+        }
+
+        // Close the password prompt
+        document.getElementById('passwordPromptModal').style.display = 'none';
+        pendingPasswordAction = null;
+    }
+
+    // Login mode toggle
+    function setLoginMode(mode) {
+        currentMode = mode;
+
+        document.querySelectorAll('.mode-btn').forEach(btn => {
+            btn.classList.remove('active');
+        });
+
+        if (mode === 'student') {
+            document.querySelector('.mode-btn[onclick="setLoginMode(\'student\')"]').classList.add('active');
+            document.getElementById('studentLoginForm').style.display = 'flex';
+            document.getElementById('adminLoginForm').style.display = 'none';
+        } else {
+            document.querySelector('.mode-btn[onclick="setLoginMode(\'admin\')"]').classList.add('active');
+            document.getElementById('studentLoginForm').style.display = 'none';
+            document.getElementById('adminLoginForm').style.display = 'flex';
+        }
+    }
+
+    // Initialize datepickers
+    function initializeDatepickers() {
+        const adminDateInput = document.getElementById('adminDate');
+        if (adminDateInput) {
+            adminDateInput.NepaliDatePicker({
+                dateFormat: "YYYY-MM-DD",
+                ndpYear: true,
+                ndpMonth: true,
+                ndpYearCount: 10,
+                disableDaysAfter: 0,
+                readOnlyInput: false,
+                onChange: function() {
+                    selectedDateCache['adminDate'] = adminDateInput.value;
+                    handleDateChange('adminDate');
+                }
+            });
+            adminDateInput.value = getTodayNepaliDate();
+            selectedDateCache['adminDate'] = getTodayNepaliDate();
+        }
+
+        const studentDateInput = document.getElementById('studentDate');
+        if (studentDateInput) {
+            studentDateInput.NepaliDatePicker({
+                dateFormat: "YYYY-MM-DD",
+                ndpYear: true,
+                ndpMonth: true,
+                ndpYearCount: 10,
+                disableDaysAfter: 0,
+                readOnlyInput: false,
+                onChange: function() {
+                    selectedDateCache['studentDate'] = studentDateInput.value;
+                    handleDateChange('studentDate');
+                }
+            });
+            studentDateInput.value = getTodayNepaliDate();
+            selectedDateCache['studentDate'] = getTodayNepaliDate();
+        }
+
+        const editDateInput = document.getElementById('editDate');
+        if (editDateInput) {
+            editDateInput.NepaliDatePicker({
+                dateFormat: "YYYY-MM-DD",
+                ndpYear: true,
+                ndpMonth: true,
+                ndpYearCount: 10,
+                disableDaysAfter: 0,
+                readOnlyInput: false
+            });
+        }
+
+        const deleteRecordDateInput = document.getElementById('deleteRecordDate');
+        if (deleteRecordDateInput) {
+            deleteRecordDateInput.NepaliDatePicker({
+                dateFormat: "YYYY-MM-DD",
+                ndpYear: true,
+                ndpMonth: true,
+                ndpYearCount: 10,
+                disableDaysAfter: 0,
+                readOnlyInput: false
+            });
+        }
+
+        const deleteDateInput = document.getElementById('deleteDateInput');
+        if (deleteDateInput) {
+            deleteDateInput.NepaliDatePicker({
+                dateFormat: "YYYY-MM-DD",
+                ndpYear: true,
+                ndpMonth: true,
+                ndpYearCount: 10,
+                disableDaysAfter: 0,
+                readOnlyInput: false
+            });
+        }
+    }
+
+    // Get today's Nepali date
+    function getTodayNepaliDate() {
+        try {
+            return NepaliFunctions.AD2BS(new Date());
+        } catch (e) {
+            const today = new Date();
+            const year = today.getFullYear() + 57;
+            const month = String(today.getMonth() + 1).padStart(2, '0');
+            const day = String(today.getDate()).padStart(2, '0');
+            return `${year}-${month}-${day}`;
+        }
+    }
+
+    // Set today's date
+    function setTodayDate(inputId) {
+        const dateInput = document.getElementById(inputId);
+        if (dateInput) {
+            dateInput.value = getTodayNepaliDate();
+            selectedDateCache[inputId] = getTodayNepaliDate();
+            
+            updateTableForDate(inputId);
+            updateTableInfo();
+            saveFormState();
+            
+            showNotification('Date set to today!', 'success');
+        }
+    }
+
+    // Load faculties for login dropdowns (with hidden classes filtered out)
+    function loadLoginFaculties() {
+        const studentSelect = document.getElementById('studentFaculty');
+        const adminSelect = document.getElementById('adminFaculty');
+        const passwordFacultySelect = document.getElementById('passwordFacultySelect');
+        const classFacultySelect = document.getElementById('facultyForClass');
+
+        [studentSelect, adminSelect, passwordFacultySelect, classFacultySelect].forEach(select => {
+            if (select) {
+                select.innerHTML = '<option value="">Select Faculty/Class</option>';
+            }
+        });
+
+        const sortedFaculties = Object.entries(facultyDatabase.faculties).sort((a, b) => {
+            return a[1].name.localeCompare(b[1].name);
+        });
+
+        sortedFaculties.forEach(([facultyId, faculty]) => {
+            // Filter out hidden classes
+            const visibleClasses = faculty.classes.filter(classId => 
+                !faculty.hiddenClasses || !faculty.hiddenClasses.includes(classId)
+            );
+            
+            const sortedClasses = [...visibleClasses].sort((a, b) => {
+                return faculty.classNames[a].localeCompare(faculty.classNames[b]);
+            });
+
+            if (studentSelect) {
+                const optgroup = document.createElement('optgroup');
+                optgroup.label = faculty.name;
+                studentSelect.appendChild(optgroup);
+
+                sortedClasses.forEach(classId => {
+                    const option = document.createElement('option');
+                    option.value = classId;
+                    option.textContent = faculty.classNames[classId];
+                    optgroup.appendChild(option);
+                });
+            }
+
+            if (adminSelect) {
+                const optgroup = document.createElement('optgroup');
+                optgroup.label = faculty.name;
+                adminSelect.appendChild(optgroup);
+
+                // Admin sees all classes (including hidden ones)
+                const allClasses = [...faculty.classes].sort((a, b) => {
+                    return faculty.classNames[a].localeCompare(faculty.classNames[b]);
+                });
+
+                allClasses.forEach(classId => {
+                    const option = document.createElement('option');
+                    option.value = classId;
+                    const isHidden = faculty.hiddenClasses && faculty.hiddenClasses.includes(classId);
+                    option.textContent = faculty.classNames[classId] + (isHidden ? ' (Hidden)' : '');
+                    option.style.color = isHidden ? '#999' : '';
+                    optgroup.appendChild(option);
+                });
+            }
+
+            if (passwordFacultySelect) {
+                const option = document.createElement('option');
+                option.value = facultyId;
+                option.textContent = faculty.name;
+                passwordFacultySelect.appendChild(option);
+            }
+
+            if (classFacultySelect) {
+                const option = document.createElement('option');
+                option.value = facultyId;
+                option.textContent = faculty.name;
+                classFacultySelect.appendChild(option);
+            }
+        });
+    }
+
+    // Check authentication state
+    function checkAuthState() {
+        auth.onAuthStateChanged(async (user) => {
+            if (user) {
+                currentUser = 'admin';
+                currentAdminEmail = user.email;
+
+                saveAdminSession(user.email);
+
+                document.getElementById('loginPage').style.display = 'none';
+                document.getElementById('adminPanel').style.display = 'block';
+                document.getElementById('adminEmailDisplay').textContent = user.email;
+
+                showTab('attendance');
+
+                console.log('Admin auto-logged in:', user.email);
+            }
+        });
+    }
+
+    // Save admin session
+    function saveAdminSession(email, password = null) {
+        const session = {
+            email: email,
+            expires: Date.now() + (24 * 60 * 60 * 1000)
+        };
+        if (password) {
+            session.password = password;
+        }
+        localStorage.setItem('admin_session', JSON.stringify(session));
+    }
+
+    // Get saved admin session
+    function getSavedAdminSession() {
+        const session = localStorage.getItem('admin_session');
+        if (session) {
+            try {
+                return JSON.parse(session);
+            } catch (e) {
+                return null;
+            }
+        }
+        return null;
+    }
+
+    // Clear admin session
+    function clearAdminSession() {
+        localStorage.removeItem('admin_session');
+    }
+
+    // Save student session
+    function saveStudentSession(faculty, password) {
+        const session = {
+            faculty: faculty,
+            password: password,
+            expires: Date.now() + (24 * 60 * 60 * 1000)
+        };
+        localStorage.setItem('student_session', JSON.stringify(session));
+    }
+
+    // Get saved student session
+    function getSavedStudentSession() {
+        const session = localStorage.getItem('student_session');
+        if (session) {
+            try {
+                return JSON.parse(session);
+            } catch (e) {
+                return null;
+            }
+        }
+        return null;
+    }
+
+    // Clear student session
+    function clearStudentSession() {
+        localStorage.removeItem('student_session');
+    }
+
+    // Restore session
+    async function restoreSession() {
+        const adminSession = getSavedAdminSession();
+        if (adminSession && adminSession.expires > Date.now()) {
+            try {
+                await auth.signInWithEmailAndPassword(adminSession.email, adminSession.password);
+                return;
+            } catch (error) {
+                console.error('Auto-login failed:', error);
+                clearAdminSession();
+            }
+        }
+
+        const studentSession = getSavedStudentSession();
+        if (studentSession && studentSession.expires > Date.now()) {
+            if (facultyDatabase.passwords[studentSession.faculty] === studentSession.password) {
+                currentUser = 'student';
+                currentFaculty = studentSession.faculty;
+
+                document.getElementById('loginPage').style.display = 'none';
+                document.getElementById('studentPanel').style.display = 'block';
+
+                initStudentPanel();
+                restoreFormState();
+
+                console.log('Student session restored');
+                return;
+            } else {
+                clearStudentSession();
+            }
+        }
+    }
+
+    // Show tab
+    function showTab(tabName) {
+        // Hide all tabs
+        document.querySelectorAll('.tab-content').forEach(tab => {
+            tab.style.display = 'none';
+        });
+        
+        // Remove active class from all tab buttons
+        document.querySelectorAll('.tab-btn').forEach(btn => {
+            btn.classList.remove('active');
+        });
+        
+        // Show selected tab
+        document.getElementById(tabName + 'Tab').style.display = 'block';
+        
+        // Add active class to clicked tab button
+        const activeBtn = Array.from(document.querySelectorAll('.tab-btn')).find(btn => 
+            btn.textContent.includes(tabName === 'attendance' ? '📊' : 
+                                    tabName === 'facultyManagement' ? '🏛️' :
+                                    tabName === 'passwordManagement' ? '🔑' : '👑')
+        );
+        if (activeBtn) {
+            activeBtn.classList.add('active');
+        }
+        
+        // Load data for specific tabs
+        if (tabName === 'facultyManagement') {
+            loadFacultyList();
+        } else if (tabName === 'passwordManagement') {
+            document.getElementById('passwordClassSelect').innerHTML = '<option value="">Select Class</option>';
+            document.getElementById('newPassword').value = '';
+            document.getElementById('confirmPassword').value = '';
+            document.getElementById('currentPasswordInfo').innerHTML = '';
+        } else if (tabName === 'adminManagement') {
+            loadAdminAccounts();
+        }
+    }
+
+    // Student login
+    async function studentLogin() {
+        const faculty = document.getElementById('studentFaculty').value;
+        const password = document.getElementById('studentPassword').value;
+
+        if (!faculty) {
+            alert('Please select a faculty/class!');
+            return;
+        }
+
+        if (!password) {
+            alert('Please enter password!');
+            return;
+        }
+
+        if (facultyDatabase.passwords[faculty] === password) {
+            currentUser = 'student';
+            currentFaculty = faculty;
+
+            saveStudentSession(faculty, password);
+
+            document.getElementById('loginPage').style.display = 'none';
+            document.getElementById('studentPanel').style.display = 'block';
+
+            initStudentPanel();
+            restoreFormState();
+            
+            startRealTimeListener();
+        } else {
+            alert('Invalid password! Please contact admin.');
+        }
+    }
+
+    // Admin login
+    async function adminLogin() {
+        const email = document.getElementById('adminEmail').value.trim();
+        const password = document.getElementById('adminPassword').value;
+
+        if (!email || !password) {
+            alert('Please enter both email and password!');
+            return;
+        }
+
+        if (!email.includes('@')) {
+            alert('Please enter a valid email address!');
+            return;
+        }
+
+        try {
+            const userCredential = await auth.signInWithEmailAndPassword(email, password);
+            const user = userCredential.user;
+
+            currentUser = 'admin';
+            currentAdminEmail = user.email;
+
+            saveAdminSession(email, password);
+
+            document.getElementById('loginPage').style.display = 'none';
+            document.getElementById('adminPanel').style.display = 'block';
+            document.getElementById('adminEmailDisplay').textContent = user.email;
+
+            showTab('attendance');
+
+            console.log('Admin logged in:', user.email);
+            
+            startRealTimeListener();
+
+        } catch (error) {
+            console.error('Admin login error:', error);
+
+            switch (error.code) {
+                case 'auth/user-not-found':
+                    alert('No admin account found!');
+                    break;
+                case 'auth/wrong-password':
+                    alert('Incorrect password!');
+                    break;
+                case 'auth/invalid-email':
+                    alert('Invalid email address!');
+                    break;
+                default:
+                    alert('Login failed: ' + error.message);
+            }
+        }
+    }
+
+    // Logout
+    function logout() {
+        if (currentUser === 'admin') {
+            auth.signOut().then(() => {
+                console.log('Admin signed out');
+            }).catch((error) => {
+                console.error('Sign out error:', error);
+            });
+            clearAdminSession();
+        } else if (currentUser === 'student') {
+            clearStudentSession();
+        }
+
+        if (currentFaculty) {
+            localStorage.removeItem(`form_state_${currentFaculty}`);
+            localStorage.removeItem(`admin_form_state_${currentFaculty}`);
+        }
+        
+        if (realTimeListener) {
+            realTimeListener();
+            realTimeListener = null;
+        }
+
+        currentUser = null;
+        currentFaculty = null;
+        currentAdminEmail = null;
+        isRealTimeActive = false;
+        currentTeacherIndex = 0;
+
+        document.getElementById('loginPage').style.display = 'block';
+        document.getElementById('adminPanel').style.display = 'none';
+        document.getElementById('studentPanel').style.display = 'none';
+        document.getElementById('realtimeIndicator').style.display = 'none';
+
+        document.getElementById('studentPassword').value = '';
+        document.getElementById('adminPassword').value = '';
+        document.getElementById('adminEmail').value = '';
+    }
+
+    // Initialize student panel
+    function initStudentPanel() {
+        let facultyName = '';
+        let className = '';
+
+        for (const facultyId in facultyDatabase.faculties) {
+            const faculty = facultyDatabase.faculties[facultyId];
+            if (faculty.classes.includes(currentFaculty)) {
+                facultyName = faculty.name;
+                className = faculty.classNames[currentFaculty];
+                break;
+            }
+        }
+
+        document.getElementById('studentFacultyTitle').textContent = `Teacher's Attendance - ${facultyName}`;
+        document.getElementById('studentCurrentFaculty').textContent = className;
+
+        loadStudentTeachers();
+        updateTableInfo();
+        loadStudentAttendance();
+    }
+
+    // Load student teachers
+    function loadStudentTeachers() {
+        const teacherSelect = document.getElementById('studentTeacher');
+        teacherSelect.innerHTML = '';
+
+        // Add regular teachers
+        if (facultyDatabase.teachers[currentFaculty]) {
+            facultyDatabase.teachers[currentFaculty].forEach((teacher, index) => {
+                const option = document.createElement('option');
+                option.value = index;
+                option.textContent = teacher;
+                teacherSelect.appendChild(option);
+            });
+        }
+
+        // Add separator
+        const separator = document.createElement('option');
+        separator.disabled = true;
+        separator.textContent = '──────────';
+        teacherSelect.appendChild(separator);
+
+        // Add Saturday, Holiday, and TA options
+        const saturdayOption = document.createElement('option');
+        saturdayOption.value = SPECIAL_STATUS.SATURDAY;
+        saturdayOption.textContent = 'Saturday (शनिबार)';
+        saturdayOption.className = 'special-status-option saturday-option';
+        teacherSelect.appendChild(saturdayOption);
+
+        const holidayOption = document.createElement('option');
+        holidayOption.value = SPECIAL_STATUS.HOLIDAY;
+        holidayOption.textContent = 'Holiday (बिदा)';
+        holidayOption.className = 'special-status-option holiday-option';
+        teacherSelect.appendChild(holidayOption);
+
+        const taOption = document.createElement('option');
+        taOption.value = SPECIAL_STATUS.TA;
+        taOption.textContent = 'Teacher Absent (TA)';
+        taOption.className = 'special-status-option';
+        teacherSelect.appendChild(taOption);
+    }
+
+    // Load student attendance
+    function loadStudentAttendance() {
+        if (!facultyDatabase.attendance[currentFaculty]) {
+            facultyDatabase.attendance[currentFaculty] = {};
+        }
+        updateStudentTable();
+    }
+
+    // Add student record
+    async function addStudentRecord() {
+        const date = document.getElementById('studentDate').value;
+        const teacherIndex = parseInt(document.getElementById('studentTeacher').value);
+        const enterTime = document.getElementById('studentEnter').value;
+        const exitTime = document.getElementById('studentExit').value;
+
+        if (!date) {
+            alert('Please select date!');
+            return;
+        }
+
+        if (isNaN(teacherIndex)) {
+            alert('Please select a teacher or special status!');
+            return;
+        }
+
+        // Initialize if needed
+        if (!facultyDatabase.attendance[currentFaculty]) {
+            facultyDatabase.attendance[currentFaculty] = {};
+        }
+        if (!facultyDatabase.attendance[currentFaculty][date]) {
+            facultyDatabase.attendance[currentFaculty][date] = {};
+        }
+
+        // Check if record already exists for this teacher on this date
+        if (teacherIndex >= 0 && facultyDatabase.attendance[currentFaculty][date][teacherIndex]) {
+            const existingRecord = facultyDatabase.attendance[currentFaculty][date][teacherIndex];
+            const teacherName = facultyDatabase.teachers[currentFaculty][teacherIndex];
+            
+            if (!confirm(`A record already exists for ${teacherName} on ${date}:\nEnter: ${existingRecord.enter || '-'}\nExit: ${existingRecord.exit || '-'}\n\nDo you want to replace it?`)) {
+                return;
+            }
+        }
+
+        // Handle special statuses
+        if (teacherIndex === SPECIAL_STATUS.SATURDAY) {
+            // Check if there are existing records for this date
+            const existingRecords = Object.keys(facultyDatabase.attendance[currentFaculty][date]).length;
+            if (existingRecords > 0) {
+                if (!confirm(`There are ${existingRecords} existing records for ${date}. Do you want to mark Saturday for all teachers? This will replace all existing records.`)) {
+                    return;
+                }
+            }
+            
+            // Mark as Saturday for all teachers
+            const record = {
+                enter: 'Saturday',
+                exit: 'Saturday',
+                timestamp: new Date().toISOString(),
+                addedBy: 'student',
+                status: 'SATURDAY'
+            };
+
+            const teachers = facultyDatabase.teachers[currentFaculty] || [];
+            teachers.forEach((_, index) => {
+                facultyDatabase.attendance[currentFaculty][date][index] = {
+                    ...record,
+                    teacherIndex: index
+                };
+            });
+            showNotification('Saturday marked for all teachers!', 'success');
+        } else if (teacherIndex === SPECIAL_STATUS.HOLIDAY) {
+            // Check if there are existing records for this date
+            const existingRecords = Object.keys(facultyDatabase.attendance[currentFaculty][date]).length;
+            if (existingRecords > 0) {
+                if (!confirm(`There are ${existingRecords} existing records for ${date}. Do you want to mark Holiday for all teachers? This will replace all existing records.`)) {
+                    return;
+                }
+            }
+            
+            // Mark as Holiday for all teachers
+            const record = {
+                enter: 'Holiday',
+                exit: 'Holiday',
+                timestamp: new Date().toISOString(),
+                addedBy: 'student',
+                status: 'HOLIDAY'
+            };
+
+            const teachers = facultyDatabase.teachers[currentFaculty] || [];
+            teachers.forEach((_, index) => {
+                facultyDatabase.attendance[currentFaculty][date][index] = {
+                    ...record,
+                    teacherIndex: index
+                };
+            });
+            showNotification('Holiday marked for all teachers!', 'success');
+        } else if (teacherIndex === SPECIAL_STATUS.TA) {
+            // Mark as Teacher Absent
+            const record = {
+                enter: 'TA',
+                exit: 'TA',
+                timestamp: new Date().toISOString(),
+                addedBy: 'student',
+                status: 'TA'
+            };
+            facultyDatabase.attendance[currentFaculty][date][teacherIndex] = record;
+            showNotification('Teacher marked as TA (Absent)!', 'warning');
+        } else if (!enterTime || !exitTime) {
+            // If no times entered, mark as TA
+            const record = {
+                enter: 'TA',
+                exit: 'TA',
+                timestamp: new Date().toISOString(),
+                addedBy: 'student',
+                status: 'TA'
+            };
+            facultyDatabase.attendance[currentFaculty][date][teacherIndex] = record;
+            showNotification('Teacher marked as TA (Absent)!', 'warning');
+        } else {
+            // Create record with times
+            const record = {
+                enter: formatTime(enterTime),
+                exit: formatTime(exitTime),
+                timestamp: new Date().toISOString(),
+                addedBy: 'student'
+            };
+            facultyDatabase.attendance[currentFaculty][date][teacherIndex] = record;
+            showNotification('Attendance record added successfully!', 'success');
+        }
+
+        // Auto-advance to next teacher
+        if (teacherIndex >= 0) {
+            const teachers = facultyDatabase.teachers[currentFaculty] || [];
+            const nextIndex = (teacherIndex + 1) % teachers.length;
+            document.getElementById('studentTeacher').value = nextIndex;
+            currentTeacherIndex = nextIndex;
+        }
+
+        // Update locally immediately
+        updateStudentTable();
+
+        // Save data
+        saveAllData();
+
+        // Clear time fields after adding record
+        document.getElementById('studentEnter').value = '';
+        document.getElementById('studentExit').value = '';
+
+        // Save form state
+        saveFormState();
+
+        // Add to pending sync if offline
+        if (!isOnline) {
+            addPendingChange({
+                type: 'ADD_RECORD',
+                faculty: currentFaculty,
+                date: date,
+                teacherIndex: teacherIndex,
+                record: facultyDatabase.attendance[currentFaculty][date][teacherIndex]
+            });
+        } else {
+            // Try to sync with cloud
+            try {
+                await autoSaveToCloud();
+            } catch (error) {
+                addPendingChange({
+                    type: 'ADD_RECORD',
+                    faculty: currentFaculty,
+                    date: date,
+                    teacherIndex: teacherIndex,
+                    record: facultyDatabase.attendance[currentFaculty][date][teacherIndex]
+                });
+            }
+        }
+
+        updateStudentTable();
+    }
+
+    // Update student table with editable cells
+    function updateStudentTable() {
+        const table = document.getElementById('studentAttendanceTable');
+
+        if (!currentFaculty || !facultyDatabase.attendance[currentFaculty]) {
+            table.innerHTML = '<tr><td colspan="15">No attendance records found</td></tr>';
+            return;
+        }
+
+        const teachers = facultyDatabase.teachers[currentFaculty] || [];
+        const attendanceData = facultyDatabase.attendance[currentFaculty];
+        
+        let selectedDate = '';
+        if (currentUser === 'student') {
+            selectedDate = document.getElementById('studentDate')?.value || '';
+        } else {
+            selectedDate = document.getElementById('adminDate')?.value || '';
+        }
+        
+        let selectedMonth = '';
+        if (selectedDate) {
+            selectedMonth = getMonthPrefix(selectedDate);
+        }
+        
+        let dates = Object.keys(attendanceData).sort();
+        if (selectedMonth) {
+            dates = dates.filter(date => date.startsWith(selectedMonth));
+        }
+        
+        const totals = calculateTotals(currentFaculty, dates);
+
+        let html = `
+            <thead>
+                <tr>
+                    <th rowspan="2" style="width:100px;">Date (BS)</th>
+        `;
+
+        teachers.forEach((teacher, index) => {
+            html += `<th colspan="2" class="teacher-name">
+                <div class="editable-teacher-name" onclick="editTeacherInStudentTable(${index})">${teacher}</div>
+            </th>`;
+        });
+
+        html += `</tr><tr>`;
+        teachers.forEach(() => html += `<th>Enter</th><th>Exit</th>`);
+        html += `</tr></thead><tbody>`;
+
+        if (dates.length === 0) {
+            html += `<tr><td colspan="${1 + teachers.length * 2}">No attendance records for ${getMonthName(selectedDate)}</td></tr>`;
+        } else {
+            dates.forEach(date => {
+                const dateData = attendanceData[date];
+
+                // Check if this date has a special status (Saturday or Holiday) for all teachers
+                const firstRecord = dateData[0];
+                const isSpecialDate = firstRecord &&
+                                     (firstRecord.status === 'SATURDAY' || 
+                                      firstRecord.status === 'HOLIDAY');
+
+                if (isSpecialDate) {
+                    // Show single row for special date
+                    const statusText = firstRecord.customText || 
+                                     (firstRecord.status === 'SATURDAY' ? 'Saturday' : 'Holiday');
+                    const rowClass = firstRecord.status === 'SATURDAY' ? 'saturday-row' : 'holiday-row';
+
+                    html += `<tr class="status-row ${rowClass}">
+                        <td>${date}</td>
+                        <td colspan="${teachers.length * 2}" style="text-align: center; font-weight: bold; font-size: 14px;" 
+                            onclick="editSpecialStatusCell('${date}', '${firstRecord.status}')">
+                            ${statusText}
+                        </td>
+                    </tr>`;
+                } else {
+                    // Show regular attendance row
+                    html += `<tr><td>${date}</td>`;
+
+                    teachers.forEach((teacher, index) => {
+                        if (dateData && dateData[index]) {
+                            const record = dateData[index];
+                            const cellClass = record.status === 'TA' ? 'ta-row' : '';
+                            html += `<td class="editable-cell clickable-cell ${cellClass}" onclick="editTableCell('${date}', ${index}, 'enter')" data-date="${date}" data-teacher="${index}" data-type="enter">${record.enter || '-'}</td>`;
+                            html += `<td class="editable-cell clickable-cell ${cellClass}" onclick="editTableCell('${date}', ${index}, 'exit')" data-date="${date}" data-teacher="${index}" data-type="exit">${record.exit || '-'}</td>`;
+                        } else {
+                            html += `<td class="editable-cell clickable-cell" onclick="editTableCell('${date}', ${index}, 'enter')" data-date="${date}" data-teacher="${index}" data-type="enter">-</td>`;
+                            html += `<td class="editable-cell clickable-cell" onclick="editTableCell('${date}', ${index}, 'exit')" data-date="${date}" data-teacher="${index}" data-type="exit">-</td>`;
+                        }
+                    });
+
+                    html += `</tr>`;
+                }
+            });
+        }
+
+        html += `</tbody><tfoot>`;
+        html += `<tr class="bottom-row"><td>Total Time</td>`;
+        totals.totalTimes.forEach((totalMinutes, index) => {
+            const hours = Math.floor(totalMinutes / 60);
+            const minutes = totalMinutes % 60;
+            html += `<td colspan="2">${hours} hr ${minutes} min</td>`;
+        });
+        html += `</tr>`;
+
+        html += `<tr class="bottom-row"><td>Total Present</td>`;
+        totals.presentCounts.forEach(count => html += `<td colspan="2">${count}</td>`);
+        html += `</tr></tfoot>`;
+
+        table.innerHTML = html;
+    }
+
+    // Edit special status cell (Saturday/Holiday)
+    function editSpecialStatusCell(date, status) {
+        if (isEditingTableCell) return;
+        isEditingTableCell = true;
+
+        const cell = document.querySelector(`tr[class*="${status === 'SATURDAY' ? 'saturday' : 'holiday'}-row"] td[colspan]`);
+        if (!cell) {
+            isEditingTableCell = false;
+            return;
+        }
+
+        const currentText = cell.textContent.trim();
+        const defaultText = status === 'SATURDAY' ? 'Saturday' : 'Holiday';
+        
+        const input = document.createElement('input');
+        input.type = 'text';
+        input.className = 'cell-input';
+        input.value = currentText === defaultText ? '' : currentText;
+        input.placeholder = `Enter custom text (default: ${defaultText})`;
+
+        const saveEdit = function() {
+            const newText = input.value.trim() || defaultText;
+            
+            // Update all teachers' records for this date
+            const teachers = facultyDatabase.teachers[currentFaculty] || [];
+            teachers.forEach((_, index) => {
+                if (facultyDatabase.attendance[currentFaculty][date][index]) {
+                    facultyDatabase.attendance[currentFaculty][date][index].enter = newText;
+                    facultyDatabase.attendance[currentFaculty][date][index].exit = newText;
+                    if (newText !== defaultText) {
+                        facultyDatabase.attendance[currentFaculty][date][index].customText = newText;
+                    } else {
+                        delete facultyDatabase.attendance[currentFaculty][date][index].customText;
+                    }
+                }
+            });
+
+            // Update table
+            if (currentUser === 'admin') {
+                updateAdminTable();
+            } else {
+                updateStudentTable();
+            }
+
+            // Save data
+            saveAllData();
+            autoSaveToCloud();
+            
+            showNotification(`${status === 'SATURDAY' ? 'Saturday' : 'Holiday'} text updated!`, 'success');
+            
+            isEditingTableCell = false;
+        };
+
+        input.onblur = saveEdit;
+        input.onkeypress = function(e) {
+            if (e.key === 'Enter') {
+                saveEdit();
+            }
+        };
+
+        cell.innerHTML = '';
+        cell.appendChild(input);
+        input.focus();
+    }
+
+    // Edit table cell directly
+    function editTableCell(date, teacherIndex, type) {
+        if (isEditingTableCell) return;
+        isEditingTableCell = true;
+
+        // Remove any existing editing cell
+        if (editingCell) {
+            const oldCell = document.querySelector(`[data-date="${editingCell.date}"][data-teacher="${editingCell.teacherIndex}"][data-type="${editingCell.type}"]`);
+            if (oldCell) {
+                oldCell.classList.remove('editing');
+                oldCell.innerHTML = oldCell.dataset.originalValue || '-';
+            }
+        }
+
+        const cell = document.querySelector(`[data-date="${date}"][data-teacher="${teacherIndex}"][data-type="${type}"]`);
+        if (!cell) {
+            isEditingTableCell = false;
+            return;
+        }
+
+        const currentValue = cell.textContent.trim();
+        cell.dataset.originalValue = currentValue;
+
+        const input = document.createElement('input');
+        input.type = 'text';
+        input.className = 'cell-input';
+        input.value = currentValue === '-' ? '' : currentValue;
+        input.placeholder = 'Enter time (HH:MM) or TA';
+
+        input.onblur = function() {
+            saveTableCellEdit(date, teacherIndex, type, input.value);
+        };
+
+        input.onkeypress = function(e) {
+            if (e.key === 'Enter') {
+                input.blur();
+            }
+        };
+
+        cell.classList.add('editing');
+        cell.innerHTML = '';
+        cell.appendChild(input);
+        input.focus();
+
+        editingCell = { date, teacherIndex, type, cell };
+    }
+
+    // Save table cell edit
+    async function saveTableCellEdit(date, teacherIndex, type, value) {
+        if (!editingCell) {
+            isEditingTableCell = false;
+            return;
+        }
+
+        value = value.trim();
+
+        // Initialize if needed
+        if (!facultyDatabase.attendance[currentFaculty]) {
+            facultyDatabase.attendance[currentFaculty] = {};
+        }
+        if (!facultyDatabase.attendance[currentFaculty][date]) {
+            facultyDatabase.attendance[currentFaculty][date] = {};
+        }
+
+        // Handle regular cell editing
+        let record = facultyDatabase.attendance[currentFaculty][date][teacherIndex];
+
+        if (!record) {
+            record = {
+                timestamp: new Date().toISOString(),
+                addedBy: currentUser
+            };
+        }
+
+        // Handle empty value
+        if (value === '') {
+            if (type === 'enter') {
+                record.enter = '';
+            } else if (type === 'exit') {
+                record.exit = '';
+            }
+            
+            // If both enter and exit are empty, delete the record
+            if ((!record.enter || record.enter === '') && (!record.exit || record.exit === '')) {
+                delete facultyDatabase.attendance[currentFaculty][date][teacherIndex];
+            } else {
+                // Clear any existing status
+                delete record.status;
+                delete record.customText;
+                facultyDatabase.attendance[currentFaculty][date][teacherIndex] = record;
+            }
+        } else if (value.toUpperCase() === 'TA') {
+            // Mark as TA
+            record.enter = 'TA';
+            record.exit = 'TA';
+            record.status = 'TA';
+            delete record.customText;
+            facultyDatabase.attendance[currentFaculty][date][teacherIndex] = record;
+        } else {
+            // Try to parse as time
+            if (type === 'enter') {
+                record.enter = formatTimeFromInput(value);
+            } else if (type === 'exit') {
+                record.exit = formatTimeFromInput(value);
+            }
+            
+            // Clear any existing status
+            delete record.status;
+            delete record.customText;
+            facultyDatabase.attendance[currentFaculty][date][teacherIndex] = record;
+        }
+
+        // Save data
+        saveAllData();
+
+        // Add to pending sync if offline
+        if (!isOnline) {
+            addPendingChange({
+                type: record && record.addedBy ? 'UPDATE_RECORD' : 'ADD_RECORD',
+                faculty: currentFaculty,
+                date: date,
+                teacherIndex: teacherIndex,
+                record: facultyDatabase.attendance[currentFaculty][date][teacherIndex]
+            });
+        } else {
+            try {
+                await autoSaveToCloud();
+                showNotification('Record updated successfully!', 'success');
+            } catch (error) {
+                addPendingChange({
+                    type: record && record.addedBy ? 'UPDATE_RECORD' : 'ADD_RECORD',
+                    faculty: currentFaculty,
+                    date: date,
+                    teacherIndex: teacherIndex,
+                    record: facultyDatabase.attendance[currentFaculty][date][teacherIndex]
+                });
+                showNotification('Record updated locally. Will sync when online.', 'warning');
+            }
+        }
+
+        // Update table
+        if (currentUser === 'admin') {
+            updateAdminTable();
+        } else {
+            updateStudentTable();
+        }
+
+        editingCell = null;
+        isEditingTableCell = false;
+    }
+
+    // Format time from input
+    function formatTimeFromInput(input) {
+        if (!input) return '';
+
+        // Check if already formatted
+        if (input.includes('AM') || input.includes('PM')) {
+            return input;
+        }
+
+        // Check if it's TA
+        if (input.toUpperCase() === 'TA') {
+            return 'TA';
+        }
+
+        // Try to parse as HH:MM
+        const match = input.match(/^(\d{1,2}):(\d{2})$/);
+        if (match) {
+            let hour = parseInt(match[1]);
+            const minute = match[2];
+            const ampm = hour >= 12 ? 'PM' : 'AM';
+            hour = hour % 12 || 12;
+            return `${hour}:${minute} ${ampm}`;
+        }
+
+        // Return as is if can't parse
+        return input;
+    }
+
+    // Admin functions
+    function loadFacultyData() {
+        const faculty = document.getElementById('adminFaculty').value;
+
+        if (!faculty) {
+            document.getElementById('teacherManagement').style.display = 'none';
+            document.getElementById('attendanceForm').style.display = 'none';
+            document.getElementById('attendanceTable').innerHTML = '';
+            return;
+        }
+
+        currentFaculty = faculty;
+
+        let facultyName = '';
+        let className = '';
+
+        for (const facultyId in facultyDatabase.faculties) {
+            const fac = facultyDatabase.faculties[facultyId];
+            if (fac.classes.includes(faculty)) {
+                facultyName = fac.name;
+                className = fac.classNames[faculty];
+                break;
+            }
+        }
+
+        document.getElementById('adminCurrentFaculty').textContent = `Faculty: ${className}`;
+        document.getElementById('facultyName').textContent = className;
+
+        // Show teacher management and attendance form
+        document.getElementById('teacherManagement').style.display = 'block';
+        document.getElementById('attendanceForm').style.display = 'flex';
+
+        updateTeacherList();
+        updateAdminTeacherDropdown();
+
+        if (!facultyDatabase.attendance[faculty]) {
+            facultyDatabase.attendance[faculty] = {};
+        }
+        updateTableInfo();
+        updateAdminTable();
+        
+        restoreFormState();
+    }
+
+    // Show faculty management
+    function showFacultyManagement() {
+        hideAllSections();
+        document.getElementById('facultyManagement').style.display = 'block';
+        loadFacultyList();
+    }
+
+    // Load faculty list
+    function loadFacultyList() {
+        const facultyList = document.getElementById('facultyList');
+        facultyList.innerHTML = '';
+
+        const sortedFaculties = Object.entries(facultyDatabase.faculties).sort((a, b) => {
+            return a[1].name.localeCompare(b[1].name);
+        });
+
+        sortedFaculties.forEach(([facultyId, faculty]) => {
+            const sortedClasses = [...faculty.classes].sort((a, b) => {
+                return faculty.classNames[a].localeCompare(faculty.classNames[b]);
+            });
+
+            const facultyDiv = document.createElement('div');
+            facultyDiv.className = 'faculty-item';
+
+            let classesHtml = '<ul class="class-list">';
+            sortedClasses.forEach(classId => {
+                const isHidden = faculty.hiddenClasses && faculty.hiddenClasses.includes(classId);
+                classesHtml += `
+                    <li class="class-item ${isHidden ? 'hidden-class' : ''}">
+                        <span>${faculty.classNames[classId]}</span>
+                        <div>
+                            <label class="visibility-toggle">
+                                <input type="checkbox" class="hide-class-checkbox" ${isHidden ? 'checked' : ''} 
+                                    onchange="toggleClassVisibility('${facultyId}', '${classId}', this.checked)">
+                                Hide
+                            </label>
+                            <button class="btn-warning edit-btn" onclick="editClass('${facultyId}', '${classId}')">Edit</button>
+                            <button class="btn-danger delete-btn" onclick="removeClass('${facultyId}', '${classId}')">Remove</button>
+                        </div>
+                    </li>
+                `;
+            });
+            classesHtml += '</ul>';
+
+            facultyDiv.innerHTML = `
+                <h4>${faculty.name} (${facultyId})</h4>
+                ${classesHtml}
+                <div class="faculty-actions">
+                    <button class="btn-warning" onclick="editFaculty('${facultyId}')">Edit Faculty</button>
+                    <button class="btn-danger" onclick="removeFaculty('${facultyId}')">Remove Faculty</button>
+                </div>
+            `;
+
+            facultyList.appendChild(facultyDiv);
+        });
+    }
+
+    // Toggle class visibility
+    function toggleClassVisibility(facultyId, classId, hide) {
+        if (!facultyDatabase.faculties[facultyId]) return;
+        
+        if (!facultyDatabase.faculties[facultyId].hiddenClasses) {
+            facultyDatabase.faculties[facultyId].hiddenClasses = [];
+        }
+        
+        if (hide) {
+            // Add to hidden classes if not already there
+            if (!facultyDatabase.faculties[facultyId].hiddenClasses.includes(classId)) {
+                facultyDatabase.faculties[facultyId].hiddenClasses.push(classId);
+            }
+        } else {
+            // Remove from hidden classes
+            const index = facultyDatabase.faculties[facultyId].hiddenClasses.indexOf(classId);
+            if (index > -1) {
+                facultyDatabase.faculties[facultyId].hiddenClasses.splice(index, 1);
+            }
+        }
+        
+        saveAllData();
+        autoSaveToCloud();
+        loadFacultyList();
+        loadLoginFaculties();
+        
+        showNotification(`Class ${hide ? 'hidden' : 'made visible'}!`, 'success');
+    }
+
+    // Show admin management
+    function showAdminManagement() {
+        loadAdminAccounts();
+    }
+
+    // Load admin accounts
+    async function loadAdminAccounts() {
+        try {
+            const adminList = document.getElementById('adminAccountsList');
+            adminList.innerHTML = `
+                <div style="background: white; padding: 15px; border-radius: 5px; border: 1px solid #dee2e6;">
+                    <p>Admin accounts are managed through Firebase Authentication.</p>
+                    <p>Current admin: <strong>${currentAdminEmail}</strong></p>
+                    <p>To manage other admin accounts, use the Firebase Console.</p>
+                </div>
+            `;
+        } catch (error) {
+            console.error('Error loading admin accounts:', error);
+        }
+    }
+
+    // Create admin account
+    async function createAdminAccount() {
+        const email = document.getElementById('newAdminEmail').value.trim();
+        const password = document.getElementById('newAdminPassword').value;
+        const confirmPassword = document.getElementById('confirmAdminPassword').value;
+
+        if (!email || !password || !confirmPassword) {
+            showAdminMessage('Please fill all fields!', 'error');
+            return;
+        }
+
+        if (!email.includes('@')) {
+            showAdminMessage('Please enter a valid email address!', 'error');
+            return;
+        }
+
+        if (password !== confirmPassword) {
+            showAdminMessage('Passwords do not match!', 'error');
+            return;
+        }
+
+        if (password.length < 6) {
+            showAdminMessage('Password must be at least 6 characters!', 'error');
+            return;
+        }
+
+        try {
+            const userCredential = await auth.createUserWithEmailAndPassword(email, password);
+            showAdminMessage(`✓ Admin account created for ${email}`, 'success');
+
+            document.getElementById('newAdminEmail').value = '';
+            document.getElementById('newAdminPassword').value = '';
+            document.getElementById('confirmAdminPassword').value = '';
+
+            loadAdminAccounts();
+
+        } catch (error) {
+            console.error('Create admin error:', error);
+
+            switch (error.code) {
+                case 'auth/email-already-in-use':
+                    showAdminMessage('This email is already registered!', 'error');
+                    break;
+                case 'auth/invalid-email':
+                    showAdminMessage('Invalid email address!', 'error');
+                    break;
+                default:
+                    showAdminMessage('Error creating account: ' + error.message, 'error');
+            }
+        }
+    }
+
+    // Change current admin password
+    async function changeCurrentAdminPassword() {
+        const password = document.getElementById('newAdminPassword').value;
+        const confirmPassword = document.getElementById('confirmAdminPassword').value;
+
+        if (!password || !confirmPassword) {
+            showAdminMessage('Please fill password fields!', 'error');
+            return;
+        }
+
+        if (password !== confirmPassword) {
+            showAdminMessage('Passwords do not match!', 'error');
+            return;
+        }
+
+        if (password.length < 6) {
+            showAdminMessage('Password must be at least 6 characters!', 'error');
+            return;
+        }
+
+        try {
+            const user = auth.currentUser;
+
+            if (!user) {
+                showAdminMessage('No user logged in!', 'error');
+                return;
+            }
+
+            await user.updatePassword(password);
+            showAdminMessage('✓ Your password has been changed successfully!', 'success');
+
+            document.getElementById('newAdminPassword').value = '';
+            document.getElementById('confirmAdminPassword').value = '';
+
+        } catch (error) {
+            console.error('Change password error:', error);
+            showAdminMessage('Error changing password: ' + error.message, 'error');
+        }
+    }
+
+    // Show admin message
+    function showAdminMessage(message, type = 'info') {
+        const messageDiv = document.getElementById('adminMessage');
+        messageDiv.innerHTML = message;
+        messageDiv.style.color = type === 'success' ? '#28a745' :
+                               type === 'error' ? '#dc3545' : '#666';
+    }
+
+    // Sort faculties by name
+    function sortFacultiesByName() {
+        let order = 1;
+        const sortedEntries = Object.entries(facultyDatabase.faculties).sort((a, b) => {
+            return a[1].name.localeCompare(b[1].name);
+        });
+
+        sortedEntries.forEach(([facultyId]) => {
+            facultyDatabase.faculties[facultyId].order = order++;
+        });
+
+        saveAllData();
+        autoSaveToCloud();
+
+        loadFacultyList();
+        loadLoginFaculties();
+
+        alert('Faculties sorted by name!');
+    }
+
+    // Add new faculty
+    async function addFaculty() {
+        const facultyName = document.getElementById('newFacultyName').value.trim();
+
+        if (!facultyName) {
+            alert('Please enter faculty name!');
+            return;
+        }
+
+        const facultyId = facultyName.toLowerCase().replace(/[^a-z0-9]/g, '_').replace(/_+/g, '_');
+
+        if (facultyDatabase.faculties[facultyId]) {
+            alert('Faculty with similar name already exists!');
+            return;
+        }
+
+        const maxOrder = Math.max(...Object.values(facultyDatabase.faculties).map(f => f.order || 0));
+
+        facultyDatabase.faculties[facultyId] = {
+            name: facultyName,
+            classes: [],
+            classNames: {},
+            hiddenClasses: [],
+            order: maxOrder + 1
+        };
+
+        saveAllData();
+
+        if (!isOnline) {
+            alert('Faculty added locally. Will sync when online.');
+        } else {
+            try {
+                await autoSaveToCloud();
+                alert('Faculty added successfully!');
+            } catch (error) {
+                alert('Faculty added locally. Sync failed, will try again later.');
+            }
+        }
+
+        document.getElementById('newFacultyName').value = '';
+
+        loadFacultyList();
+        loadLoginFaculties();
+    }
+
+    // Edit faculty
+    function editFaculty(facultyId) {
+        const newName = prompt('Enter new name for this faculty:', facultyDatabase.faculties[facultyId].name);
+        if (newName && newName.trim()) {
+            facultyDatabase.faculties[facultyId].name = newName.trim();
+            saveAllData();
+            autoSaveToCloud();
+            loadFacultyList();
+            loadLoginFaculties();
+            alert('Faculty updated successfully!');
+        }
+    }
+
+    // Remove faculty
+    async function removeFaculty(facultyId) {
+        if (!confirm(`Are you sure you want to remove the entire ${facultyDatabase.faculties[facultyId].name} faculty? This will delete all classes, teachers, and attendance records!`)) {
+            return;
+        }
+
+        const faculty = facultyDatabase.faculties[facultyId];
+        faculty.classes.forEach(classId => {
+            delete facultyDatabase.passwords[classId];
+            delete facultyDatabase.teachers[classId];
+            delete facultyDatabase.attendance[classId];
+        });
+
+        delete facultyDatabase.faculties[facultyId];
+
+        saveAllData();
+
+        if (!isOnline) {
+            alert('Faculty removed locally. Will sync when online.');
+        } else {
+            try {
+                await autoSaveToCloud();
+                alert('Faculty removed successfully!');
+            } catch (error) {
+                alert('Faculty removed locally. Sync failed, will try again later.');
+            }
+        }
+
+        loadFacultyList();
+        loadLoginFaculties();
+    }
+
+    // Add new class to faculty
+    async function addClass() {
+        const facultyId = document.getElementById('facultyForClass').value;
+        const className = document.getElementById('newClassName').value.trim();
+
+        if (!facultyId) {
+            alert('Please select a faculty!');
+            return;
+        }
+
+        if (!className) {
+            alert('Please enter class name!');
+            return;
+        }
+
+        const classId = `${facultyId}_${className.toLowerCase().replace(/[^a-z0-9]/g, '_').replace(/_+/g, '_')}`;
+
+        if (facultyDatabase.faculties[facultyId].classes.includes(classId)) {
+            alert('Class with similar name already exists in this faculty!');
+            return;
+        }
+
+        facultyDatabase.faculties[facultyId].classes.push(classId);
+        facultyDatabase.faculties[facultyId].classNames[classId] = className;
+
+        facultyDatabase.passwords[classId] = 'class' + Math.floor(1000 + Math.random() * 9000);
+
+        facultyDatabase.teachers[classId] = [
+            'Teacher 1',
+            'Teacher 2',
+            'Teacher 3',
+            'Teacher 4',
+            'Teacher 5',
+            'Teacher 6'
+        ];
+
+        facultyDatabase.attendance[classId] = {};
+
+        saveAllData();
+
+        if (!isOnline) {
+            alert('Class added locally. Will sync when online.');
+        } else {
+            try {
+                await autoSaveToCloud();
+                alert(`Class added successfully! Default password: ${facultyDatabase.passwords[classId]}`);
+            } catch (error) {
+                alert('Class added locally. Sync failed, will try again later.');
+            }
+        }
+
+        document.getElementById('newClassName').value = '';
+
+        loadFacultyList();
+        loadLoginFaculties();
+    }
+
+    // Edit class
+    function editClass(facultyId, classId) {
+        const newName = prompt('Enter new name for this class:', facultyDatabase.faculties[facultyId].classNames[classId]);
+        if (newName && newName.trim()) {
+            facultyDatabase.faculties[facultyId].classNames[classId] = newName.trim();
+            saveAllData();
+            autoSaveToCloud();
+            loadFacultyList();
+            loadLoginFaculties();
+            alert('Class updated successfully!');
+        }
+    }
+
+    // Remove class
+    async function removeClass(facultyId, classId) {
+        if (!confirm(`Are you sure you want to remove ${facultyDatabase.faculties[facultyId].classNames[classId]}? This will delete all teachers and attendance records for this class!`)) {
+            return;
+        }
+
+        const index = facultyDatabase.faculties[facultyId].classes.indexOf(classId);
+        if (index > -1) {
+            facultyDatabase.faculties[facultyId].classes.splice(index, 1);
+        }
+        delete facultyDatabase.faculties[facultyId].classNames[classId];
+        delete facultyDatabase.passwords[classId];
+        delete facultyDatabase.teachers[classId];
+        delete facultyDatabase.attendance[classId];
+
+        // Also remove from hiddenClasses if present
+        if (facultyDatabase.faculties[facultyId].hiddenClasses) {
+            const hiddenIndex = facultyDatabase.faculties[facultyId].hiddenClasses.indexOf(classId);
+            if (hiddenIndex > -1) {
+                facultyDatabase.faculties[facultyId].hiddenClasses.splice(hiddenIndex, 1);
+            }
+        }
+
+        saveAllData();
+
+        if (!isOnline) {
+            alert('Class removed locally. Will sync when online.');
+        } else {
+            try {
+                await autoSaveToCloud();
+                alert('Class removed successfully!');
+            } catch (error) {
+                alert('Class removed locally. Sync failed, will try again later.');
+            }
+        }
+
+        loadFacultyList();
+        loadLoginFaculties();
+    }
+
+    // Load classes for password management
+    function loadClassesForPassword() {
+        const facultyId = document.getElementById('passwordFacultySelect').value;
+        const classSelect = document.getElementById('passwordClassSelect');
+
+        classSelect.innerHTML = '<option value="">Select Class</option>';
+
+        if (facultyId && facultyDatabase.faculties[facultyId]) {
+            const faculty = facultyDatabase.faculties[facultyId];
+            const sortedClasses = [...faculty.classes].sort((a, b) => {
+                return faculty.classNames[a].localeCompare(faculty.classNames[b]);
+            });
+
+            sortedClasses.forEach(classId => {
+                const option = document.createElement('option');
+                option.value = classId;
+                option.textContent = faculty.classNames[classId];
+                option.selected = (currentFaculty === classId);
+                classSelect.appendChild(option);
+            });
+        }
+    }
+
+    // Show current password
+    function showCurrentPassword() {
+        const classId = document.getElementById('passwordClassSelect').value;
+        const facultyId = document.getElementById('passwordFacultySelect').value;
+
+        if (classId && facultyId && facultyDatabase.faculties[facultyId]) {
+            const faculty = facultyDatabase.faculties[facultyId];
+            const currentPassword = facultyDatabase.passwords[classId] || 'Not set';
+
+            document.getElementById('currentPasswordInfo').innerHTML =
+                `Current password for <strong>${faculty.classNames[classId]}</strong> is: <code>${currentPassword}</code>`;
+        } else {
+            document.getElementById('currentPasswordInfo').innerHTML = '';
+        }
+    }
+
+    // Generate random password
+    function generateRandomPassword() {
+        const length = 8;
+        const charset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+        let password = "";
+
+        for (let i = 0; i < length; i++) {
+            password += charset.charAt(Math.floor(Math.random() * charset.length));
+        }
+
+        document.getElementById('newPassword').value = password;
+        document.getElementById('confirmPassword').value = password;
+    }
+
+    // Change class password
+    async function changeClassPassword() {
+        const classId = document.getElementById('passwordClassSelect').value;
+        const newPassword = document.getElementById('newPassword').value;
+        const confirmPassword = document.getElementById('confirmPassword').value;
+
+        if (!classId) {
+            alert('Please select a class!');
+            return;
+        }
+
+        if (!newPassword) {
+            alert('Please enter new password!');
+            return;
+        }
+
+        if (newPassword !== confirmPassword) {
+            alert('Passwords do not match!');
+            return;
+        }
+
+        if (newPassword.length < 6) {
+            alert('Password must be at least 6 characters!');
+            return;
+        }
+
+        let facultyName = '';
+        let className = '';
+
+        for (const facultyId in facultyDatabase.faculties) {
+            const faculty = facultyDatabase.faculties[facultyId];
+            if (faculty.classes.includes(classId)) {
+                facultyName = faculty.name;
+                className = faculty.classNames[classId];
+                break;
+            }
+        }
+
+        if (confirm(`Change password for ${className} in ${facultyName}?\nNew password will be: ${newPassword}`)) {
+            facultyDatabase.passwords[classId] = newPassword;
+
+            saveAllData();
+
+            if (!isOnline) {
+                alert('Password changed locally. Will sync when online.');
+            } else {
+                try {
+                    await autoSaveToCloud();
+                    alert(`Password changed successfully for ${className}!`);
+                } catch (error) {
+                    alert('Password changed locally. Sync failed, will try again later.');
+                }
+            }
+
+            document.getElementById('newPassword').value = '';
+            document.getElementById('confirmPassword').value = '';
+            document.getElementById('currentPasswordInfo').innerHTML =
+                `New password for <strong>${className}</strong> is: <code>${newPassword}</code>`;
+        }
+    }
+
+    // Update teacher list
+    function updateTeacherList() {
+        const teacherList = document.getElementById('teacherList');
+        teacherList.innerHTML = '';
+
+        if (facultyDatabase.teachers[currentFaculty]) {
+            facultyDatabase.teachers[currentFaculty].forEach((teacher, index) => {
+                const div = document.createElement('div');
+                div.className = 'teacher-item';
+                div.innerHTML = `
+                    <span class="editable-teacher-name" onclick="editTeacherInList(${index})">${teacher}</span>
+                    <span class="remove-teacher" onclick="removeTeacher(${index})">×</span>
+                `;
+                teacherList.appendChild(div);
+            });
+        }
+    }
+
+    // Edit teacher in list
+    function editTeacherInList(index) {
+        if (currentUser !== 'admin') return;
+
+        const currentName = facultyDatabase.teachers[currentFaculty][index];
+        const newName = prompt('Enter new name for teacher:', currentName);
+
+        if (newName && newName.trim() && newName !== currentName) {
+            facultyDatabase.teachers[currentFaculty][index] = newName.trim();
+
+            saveAllData();
+            autoSaveToCloud();
+
+            updateTeacherList();
+            updateAdminTeacherDropdown();
+            updateAdminTable();
+        }
+    }
+
+    // Update admin teacher dropdown
+    function updateAdminTeacherDropdown() {
+        const teacherSelect = document.getElementById('adminTeacher');
+        teacherSelect.innerHTML = '';
+
+        // Add regular teachers
+        if (facultyDatabase.teachers[currentFaculty]) {
+            facultyDatabase.teachers[currentFaculty].forEach((teacher, index) => {
+                const option = document.createElement('option');
+                option.value = index;
+                option.textContent = teacher;
+                teacherSelect.appendChild(option);
+            });
+        }
+
+        // Add separator
+        const separator = document.createElement('option');
+        separator.disabled = true;
+        separator.textContent = '──────────';
+        teacherSelect.appendChild(separator);
+
+        // Add Saturday, Holiday, and TA options
+        const saturdayOption = document.createElement('option');
+        saturdayOption.value = SPECIAL_STATUS.SATURDAY;
+        saturdayOption.textContent = 'Saturday (शनिबार)';
+        saturdayOption.className = 'special-status-option saturday-option';
+        teacherSelect.appendChild(saturdayOption);
+
+        const holidayOption = document.createElement('option');
+        holidayOption.value = SPECIAL_STATUS.HOLIDAY;
+        holidayOption.textContent = 'Holiday (बिदा)';
+        holidayOption.className = 'special-status-option holiday-option';
+        teacherSelect.appendChild(holidayOption);
+
+        const taOption = document.createElement('option');
+        taOption.value = SPECIAL_STATUS.TA;
+        taOption.textContent = 'Teacher Absent (TA)';
+        taOption.className = 'special-status-option';
+        teacherSelect.appendChild(taOption);
+    }
+
+    // Add teacher
+    async function addTeacher() {
+        const teacherName = document.getElementById('newTeacherName').value.trim();
+
+        if (!teacherName) {
+            alert('Please enter teacher name!');
+            return;
+        }
+
+        if (!facultyDatabase.teachers[currentFaculty]) {
+            facultyDatabase.teachers[currentFaculty] = [];
+        }
+
+        facultyDatabase.teachers[currentFaculty].push(teacherName);
+
+        updateTeacherList();
+        updateAdminTeacherDropdown();
+
+        document.getElementById('newTeacherName').value = '';
+
+        saveAllData();
+
+        if (!isOnline) {
+            alert('Teacher added locally. Will sync when online.');
+        } else {
+            try {
+                await autoSaveToCloud();
+                alert('Teacher added successfully!');
+            } catch (error) {
+                alert('Teacher added locally. Sync failed, will try again later.');
+            }
+        }
+
+        updateAdminTable();
+    }
+
+    // Remove teacher
+    async function removeTeacher(index) {
+        if (confirm('Are you sure you want to remove this teacher?')) {
+            const teacherName = facultyDatabase.teachers[currentFaculty][index];
+
+            facultyDatabase.teachers[currentFaculty].splice(index, 1);
+
+            updateTeacherList();
+            updateAdminTeacherDropdown();
+
+            saveAllData();
+
+            if (!isOnline) {
+                alert('Teacher removed locally. Will sync when online.');
+            } else {
+                try {
+                    await autoSaveToCloud();
+                } catch (error) {
+                    alert('Teacher removed locally. Sync failed, will try again later.');
+                }
+            }
+
+            updateAdminTable();
+        }
+    }
+
+    // Add record from admin panel
+    async function addRecord() {
+        const date = document.getElementById('adminDate').value;
+        const teacherIndex = parseInt(document.getElementById('adminTeacher').value);
+        const enterTime = document.getElementById('adminEnter').value;
+        const exitTime = document.getElementById('adminExit').value;
+
+        if (!date) {
+            alert('Please select date!');
+            return;
+        }
+
+        if (isNaN(teacherIndex)) {
+            alert('Please select a teacher or special status!');
+            return;
+        }
+
+        // Initialize if needed
+        if (!facultyDatabase.attendance[currentFaculty]) {
+            facultyDatabase.attendance[currentFaculty] = {};
+        }
+        if (!facultyDatabase.attendance[currentFaculty][date]) {
+            facultyDatabase.attendance[currentFaculty][date] = {};
+        }
+
+        // Check if record already exists for this teacher on this date
+        if (teacherIndex >= 0 && facultyDatabase.attendance[currentFaculty][date][teacherIndex]) {
+            const existingRecord = facultyDatabase.attendance[currentFaculty][date][teacherIndex];
+            const teacherName = facultyDatabase.teachers[currentFaculty][teacherIndex];
+            
+            if (!confirm(`A record already exists for ${teacherName} on ${date}:\nEnter: ${existingRecord.enter || '-'}\nExit: ${existingRecord.exit || '-'}\n\nDo you want to replace it?`)) {
+                return;
+            }
+        }
+
+        // Handle special statuses
+        if (teacherIndex === SPECIAL_STATUS.SATURDAY) {
+            // Check if there are existing records for this date
+            const existingRecords = Object.keys(facultyDatabase.attendance[currentFaculty][date]).length;
+            if (existingRecords > 0) {
+                if (!confirm(`There are ${existingRecords} existing records for ${date}. Do you want to mark Saturday for all teachers? This will replace all existing records.`)) {
+                    return;
+                }
+            }
+            
+            // Mark as Saturday for all teachers
+            const record = {
+                enter: 'Saturday',
+                exit: 'Saturday',
+                timestamp: new Date().toISOString(),
+                addedBy: 'admin',
+                status: 'SATURDAY'
+            };
+
+            const teachers = facultyDatabase.teachers[currentFaculty] || [];
+            teachers.forEach((_, index) => {
+                facultyDatabase.attendance[currentFaculty][date][index] = {
+                    ...record,
+                    teacherIndex: index
+                };
+            });
+            showNotification('Saturday marked for all teachers!', 'success');
+        } else if (teacherIndex === SPECIAL_STATUS.HOLIDAY) {
+            // Check if there are existing records for this date
+            const existingRecords = Object.keys(facultyDatabase.attendance[currentFaculty][date]).length;
+            if (existingRecords > 0) {
+                if (!confirm(`There are ${existingRecords} existing records for ${date}. Do you want to mark Holiday for all teachers? This will replace all existing records.`)) {
+                    return;
+                }
+            }
+            
+            // Mark as Holiday for all teachers
+            const record = {
+                enter: 'Holiday',
+                exit: 'Holiday',
+                timestamp: new Date().toISOString(),
+                addedBy: 'admin',
+                status: 'HOLIDAY'
+            };
+
+            const teachers = facultyDatabase.teachers[currentFaculty] || [];
+            teachers.forEach((_, index) => {
+                facultyDatabase.attendance[currentFaculty][date][index] = {
+                    ...record,
+                    teacherIndex: index
+                };
+            });
+            showNotification('Holiday marked for all teachers!', 'success');
+        } else if (teacherIndex === SPECIAL_STATUS.TA) {
+            // Mark as Teacher Absent
+            const record = {
+                enter: 'TA',
+                exit: 'TA',
+                timestamp: new Date().toISOString(),
+                addedBy: 'admin',
+                status: 'TA'
+            };
+            facultyDatabase.attendance[currentFaculty][date][teacherIndex] = record;
+            showNotification('Teacher marked as TA (Absent)!', 'warning');
+        } else if (!enterTime || !exitTime) {
+            // If no times entered, mark as TA
+            const record = {
+                enter: 'TA',
+                exit: 'TA',
+                timestamp: new Date().toISOString(),
+                addedBy: 'admin',
+                status: 'TA'
+            };
+            facultyDatabase.attendance[currentFaculty][date][teacherIndex] = record;
+            showNotification('Teacher marked as TA (Absent)!', 'warning');
+        } else {
+            // Create record with times
+            const record = {
+                enter: formatTime(enterTime),
+                exit: formatTime(exitTime),
+                timestamp: new Date().toISOString(),
+                addedBy: 'admin'
+            };
+            facultyDatabase.attendance[currentFaculty][date][teacherIndex] = record;
+            showNotification('Attendance record added successfully!', 'success');
+        }
+
+        // Auto-advance to next teacher
+        if (teacherIndex >= 0) {
+            const teachers = facultyDatabase.teachers[currentFaculty] || [];
+            const nextIndex = (teacherIndex + 1) % teachers.length;
+            document.getElementById('adminTeacher').value = nextIndex;
+            currentTeacherIndex = nextIndex;
+        }
+
+        // Update locally immediately
+        updateAdminTable();
+
+        // Save data
+        saveAllData();
+
+        // Clear time fields after adding record
+        document.getElementById('adminEnter').value = '';
+        document.getElementById('adminExit').value = '';
+
+        saveFormState();
+
+        if (!isOnline) {
+            addPendingChange({
+                type: 'ADD_RECORD',
+                faculty: currentFaculty,
+                date: date,
+                teacherIndex: teacherIndex,
+                record: facultyDatabase.attendance[currentFaculty][date][teacherIndex]
+            });
+        } else {
+            try {
+                await autoSaveToCloud();
+            } catch (error) {
+                addPendingChange({
+                    type: 'ADD_RECORD',
+                    faculty: currentFaculty,
+                    date: date,
+                    teacherIndex: teacherIndex,
+                    record: facultyDatabase.attendance[currentFaculty][date][teacherIndex]
+                });
+            }
+        }
+
+        updateAdminTable();
+    }
+
+    // Update admin table with editable cells
+    function updateAdminTable() {
+        const table = document.getElementById('attendanceTable');
+
+        if (!currentFaculty || !facultyDatabase.attendance[currentFaculty]) {
+            table.innerHTML = '<tr><td colspan="15">No attendance records found</td></tr>';
+            return;
+        }
+
+        const teachers = facultyDatabase.teachers[currentFaculty] || [];
+        const attendanceData = facultyDatabase.attendance[currentFaculty];
+        
+        let selectedDate = '';
+        if (currentUser === 'admin') {
+            selectedDate = document.getElementById('adminDate')?.value || '';
+        } else {
+            selectedDate = document.getElementById('studentDate')?.value || '';
+        }
+        
+        let selectedMonth = '';
+        if (selectedDate) {
+            selectedMonth = getMonthPrefix(selectedDate);
+        }
+        
+        let dates = Object.keys(attendanceData).sort();
+        if (selectedMonth) {
+            dates = dates.filter(date => date.startsWith(selectedMonth));
+        }
+        
+        const totals = calculateTotals(currentFaculty, dates);
+
+        let html = `
+            <thead>
+                <tr>
+                    <th rowspan="2" style="width:100px;">Date (BS)</th>
+        `;
+
+        teachers.forEach((teacher, index) => {
+            html += `<th colspan="2" class="teacher-name">
+                <div class="editable-teacher-name" onclick="editTeacherNameInAdminTable(${index})">${teacher}</div>
+            </th>`;
+        });
+
+        html += `</tr><tr>`;
+        teachers.forEach(() => html += `<th>Enter</th><th>Exit</th>`);
+        html += `</tr></thead><tbody>`;
+
+        if (dates.length === 0) {
+            html += `<tr><td colspan="${1 + teachers.length * 2}">No attendance records for ${getMonthName(selectedDate)}</td></tr>`;
+        } else {
+            dates.forEach(date => {
+                const dateData = attendanceData[date];
+
+                // Check if this date has a special status (Saturday or Holiday) for all teachers
+                const firstRecord = dateData[0];
+                const isSpecialDate = firstRecord &&
+                                     (firstRecord.status === 'SATURDAY' || 
+                                      firstRecord.status === 'HOLIDAY');
+
+                if (isSpecialDate) {
+                    // Show single row for special date
+                    const statusText = firstRecord.customText || 
+                                     (firstRecord.status === 'SATURDAY' ? 'Saturday' : 'Holiday');
+                    const rowClass = firstRecord.status === 'SATURDAY' ? 'saturday-row' : 'holiday-row';
+
+                    html += `<tr class="status-row ${rowClass}">
+                        <td>${date}</td>
+                        <td colspan="${teachers.length * 2}" style="text-align: center; font-weight: bold; font-size: 14px;" 
+                            onclick="editSpecialStatusCell('${date}', '${firstRecord.status}')">
+                            ${statusText}
+                        </td>
+                    </tr>`;
+                } else {
+                    // Show regular attendance row
+                    html += `<tr><td>${date}</td>`;
+
+                    teachers.forEach((teacher, index) => {
+                        if (dateData && dateData[index]) {
+                            const record = dateData[index];
+                            const cellClass = record.status === 'TA' ? 'ta-row' : '';
+                            html += `<td class="editable-cell clickable-cell ${cellClass}" onclick="editTableCell('${date}', ${index}, 'enter')" data-date="${date}" data-teacher="${index}" data-type="enter">${record.enter || '-'}</td>`;
+                            html += `<td class="editable-cell clickable-cell ${cellClass}" onclick="editTableCell('${date}', ${index}, 'exit')" data-date="${date}" data-teacher="${index}" data-type="exit">${record.exit || '-'}</td>`;
+                        } else {
+                            html += `<td class="editable-cell clickable-cell" onclick="editTableCell('${date}', ${index}, 'enter')" data-date="${date}" data-teacher="${index}" data-type="enter">-</td>`;
+                            html += `<td class="editable-cell clickable-cell" onclick="editTableCell('${date}', ${index}, 'exit')" data-date="${date}" data-teacher="${index}" data-type="exit">-</td>`;
+                        }
+                    });
+
+                    html += `</tr>`;
+                }
+            });
+        }
+
+        html += `</tbody><tfoot>`;
+        html += `<tr class="bottom-row"><td>Total Time</td>`;
+        totals.totalTimes.forEach((totalMinutes, index) => {
+            const hours = Math.floor(totalMinutes / 60);
+            const minutes = totalMinutes % 60;
+            html += `<td colspan="2">${hours} hr ${minutes} min</td>`;
+        });
+        html += `</tr>`;
+
+        html += `<tr class="bottom-row"><td>Total Present</td>`;
+        totals.presentCounts.forEach(count => html += `<td colspan="2">${count}</td>`);
+        html += `</tr></tfoot>`;
+
+        table.innerHTML = html;
+    }
+
+    // Edit teacher name in admin table
+    function editTeacherNameInAdminTable(teacherIndex) {
+        if (currentUser !== 'admin') return;
+
+        const currentName = facultyDatabase.teachers[currentFaculty][teacherIndex];
+        const newName = prompt('Enter new name for teacher:', currentName);
+
+        if (newName && newName.trim() && newName !== currentName) {
+            facultyDatabase.teachers[currentFaculty][teacherIndex] = newName.trim();
+
+            saveAllData();
+            autoSaveToCloud();
+
+            updateTeacherList();
+            updateAdminTeacherDropdown();
+            updateAdminTable();
+        }
+    }
+
+    // Calculate totals
+    function calculateTotals(faculty, dates = null) {
+        const teachers = facultyDatabase.teachers[faculty] || [];
+        const attendanceData = facultyDatabase.attendance[faculty] || {};
+        
+        if (!dates) {
+            dates = Object.keys(attendanceData);
+        }
+
+        const totalTimes = new Array(teachers.length).fill(0);
+        const presentCounts = new Array(teachers.length).fill(0);
+
+        dates.forEach(date => {
+            const dateData = attendanceData[date];
+            if (!dateData) return;
+            
+            const firstRecord = dateData[0];
+            const isSpecialDate = firstRecord && 
+                                 (firstRecord.status === 'SATURDAY' || 
+                                  firstRecord.status === 'HOLIDAY');
+            
+            if (isSpecialDate) {
+                return;
+            }
+
+            teachers.forEach((teacher, index) => {
+                if (dateData && dateData[index]) {
+                    const record = dateData[index];
+
+                    if (record.enter && record.exit) {
+                        const isSpecialStatus = record.status === 'TA' ||
+                                               record.enter === 'TA' || record.exit === 'TA' ||
+                                               record.enter === 'Saturday' || record.exit === 'Saturday' ||
+                                               record.enter === 'Holiday' || record.exit === 'Holiday';
+
+                        if (!isSpecialStatus) {
+                            const enterMatch = record.enter.match(/(\d+):(\d+)\s*(AM|PM)/i);
+                            const exitMatch = record.exit.match(/(\d+):(\d+)\s*(AM|PM)/i);
+
+                            if (enterMatch && exitMatch) {
+                                presentCounts[index]++;
+
+                                let enterHour = parseInt(enterMatch[1]);
+                                const enterMinute = parseInt(enterMatch[2]);
+                                const enterAmPm = enterMatch[3].toUpperCase();
+
+                                let exitHour = parseInt(exitMatch[1]);
+                                const exitMinute = parseInt(exitMatch[2]);
+                                const exitAmPm = exitMatch[3].toUpperCase();
+
+                                if (enterAmPm === 'PM' && enterHour !== 12) enterHour += 12;
+                                if (enterAmPm === 'AM' && enterHour === 12) enterHour = 0;
+
+                                if (exitAmPm === 'PM' && exitHour !== 12) exitHour += 12;
+                                if (exitAmPm === 'AM' && exitHour === 12) exitHour = 0;
+
+                                const enterMinutes = enterHour * 60 + enterMinute;
+                                const exitMinutes = exitHour * 60 + exitMinute;
+
+                                let diff = exitMinutes - enterMinutes;
+                                if (diff < 0) diff += 24 * 60;
+
+                                totalTimes[index] += diff;
+                            }
+                        }
+                    }
+                }
+            });
+        });
+
+        return { totalTimes, presentCounts };
+    }
+
+    // Show delete options
+    function showDeleteOptions() {
+        if (!currentFaculty) {
+            alert('Please select a faculty first!');
+            return;
+        }
+
+        document.getElementById('deleteOptionsModal').style.display = 'flex';
+    }
+
+    // Close delete options
+    function closeDeleteOptions() {
+        document.getElementById('deleteOptionsModal').style.display = 'none';
+    }
+
+    // Open delete single record form
+    function openDeleteSingleRecordForm() {
+        closeDeleteOptions();
+
+        const teacherSelect = document.getElementById('deleteRecordTeacher');
+        teacherSelect.innerHTML = '';
+
+        if (facultyDatabase.teachers[currentFaculty]) {
+            facultyDatabase.teachers[currentFaculty].forEach((teacher, index) => {
+                const option = document.createElement('option');
+                option.value = index;
+                option.textContent = teacher;
+                teacherSelect.appendChild(option);
+            });
+        }
+
+        document.getElementById('deleteSingleRecordModal').style.display = 'flex';
+    }
+
+    // Close delete single record modal
+    function closeDeleteSingleRecordModal() {
+        document.getElementById('deleteSingleRecordModal').style.display = 'none';
+    }
+
+    // Open delete date form
+    function openDeleteDateForm() {
+        closeDeleteOptions();
+
+        document.getElementById('deleteDateInput').value = '';
+        document.getElementById('dateRecordsPreview').innerHTML = '';
+
+        document.getElementById('deleteDateModal').style.display = 'flex';
+    }
+
+    // Close delete date modal
+    function closeDeleteDateModal() {
+        document.getElementById('deleteDateModal').style.display = 'none';
+    }
+
+    // Update date records preview
+    function updateDateRecordsPreview() {
+        const date = document.getElementById('deleteDateInput').value;
+        const preview = document.getElementById('dateRecordsPreview');
+
+        if (!date) {
+            preview.innerHTML = '';
+            return;
+        }
+
+        if (facultyDatabase.attendance[currentFaculty] && facultyDatabase.attendance[currentFaculty][date]) {
+            const dateData = facultyDatabase.attendance[currentFaculty][date];
+            const teachers = facultyDatabase.teachers[currentFaculty];
+            const recordCount = Object.keys(dateData).length;
+
+            let previewHtml = `<strong>Found ${recordCount} records for ${date}:</strong><br>`;
+            let count = 0;
+
+            teachers.forEach((teacher, index) => {
+                if (dateData[index]) {
+                    const record = dateData[index];
+                    previewHtml += `${teacher}: ${record.enter || '-'} - ${record.exit || '-'}<br>`;
+                    count++;
+                    if (count >= 5) {
+                        previewHtml += `... and ${recordCount - 5} more records`;
+                        return;
+                    }
+                }
+            });
+
+            preview.innerHTML = previewHtml;
+        } else {
+            preview.innerHTML = `<em>No records found for ${date}</em>`;
+        }
+    }
+
+    // Delete specific record
+    async function deleteSpecificRecord() {
+        const date = document.getElementById('deleteRecordDate').value;
+        const teacherIndex = parseInt(document.getElementById('deleteRecordTeacher').value);
+
+        if (!date || isNaN(teacherIndex)) {
+            alert('Please select date and teacher!');
+            return;
+        }
+
+        if (!facultyDatabase.attendance[currentFaculty] ||
+            !facultyDatabase.attendance[currentFaculty][date] ||
+            !facultyDatabase.attendance[currentFaculty][date][teacherIndex]) {
+            alert('No record found to delete!');
+            return;
+        }
+
+        const teacherName = facultyDatabase.teachers[currentFaculty][teacherIndex];
+        const record = facultyDatabase.attendance[currentFaculty][date][teacherIndex];
+
+        if (!confirm(`Are you sure you want to delete the record for ${teacherName} on ${date}?`)) {
+            return;
+        }
+
+        try {
+            delete facultyDatabase.attendance[currentFaculty][date][teacherIndex];
+
+            if (Object.keys(facultyDatabase.attendance[currentFaculty][date]).length === 0) {
+                delete facultyDatabase.attendance[currentFaculty][date];
+            }
+
+            if (currentUser === 'admin') {
+                updateAdminTable();
+            } else {
+                updateStudentTable();
+            }
+
+            saveAllData();
+
+            if (!isOnline) {
+                addPendingChange({
+                    type: 'DELETE_RECORD',
+                    faculty: currentFaculty,
+                    date: date,
+                    teacherIndex: teacherIndex,
+                    originalRecord: record
+                });
+                alert('Record deleted locally. Will sync when online.');
+            } else {
+                try {
+                    await autoSaveToCloud();
+                    showNotification('Record deleted successfully!', 'success');
+                } catch (error) {
+                    addPendingChange({
+                        type: 'DELETE_RECORD',
+                        faculty: currentFaculty,
+                        date: date,
+                        teacherIndex: teacherIndex,
+                        originalRecord: record
+                    });
+                    showNotification('Record deleted locally. Will sync when online.', 'warning');
+                }
+            }
+
+            closeDeleteSingleRecordModal();
+        } catch (error) {
+            console.error('Delete error:', error);
+            alert('Error deleting record: ' + error.message);
+        }
+    }
+
+    // Delete all records for a date
+    async function deleteAllRecordsForDate() {
+        const date = document.getElementById('deleteDateInput').value;
+
+        if (!date) {
+            alert('Please select a date!');
+            return;
+        }
+
+        if (!facultyDatabase.attendance[currentFaculty] || !facultyDatabase.attendance[currentFaculty][date]) {
+            alert('No records found for this date!');
+            return;
+        }
+
+        const recordCount = Object.keys(facultyDatabase.attendance[currentFaculty][date]).length;
+
+        if (!confirm(`Are you sure you want to delete ALL ${recordCount} records for ${date}? This action cannot be undone!`)) {
+            return;
+        }
+
+        try {
+            const records = facultyDatabase.attendance[currentFaculty][date];
+
+            delete facultyDatabase.attendance[currentFaculty][date];
+
+            if (currentUser === 'admin') {
+                updateAdminTable();
+            } else {
+                updateStudentTable();
+            }
+
+            saveAllData();
+
+            if (!isOnline) {
+                addPendingChange({
+                    type: 'DELETE_DATE_RECORDS',
+                    faculty: currentFaculty,
+                    date: date,
+                    originalRecords: records
+                });
+                alert(`${recordCount} records deleted locally. Will sync when online.`);
+            } else {
+                try {
+                    await autoSaveToCloud();
+                    showNotification(`${recordCount} records deleted successfully!`, 'success');
+                } catch (error) {
+                    addPendingChange({
+                        type: 'DELETE_DATE_RECORDS',
+                        faculty: currentFaculty,
+                        date: date,
+                        originalRecords: records
+                    });
+                    showNotification(`${recordCount} records deleted locally. Will sync when online.`, 'warning');
+                }
+            }
+
+            closeDeleteDateModal();
+        } catch (error) {
+            console.error('Delete error:', error);
+            alert('Error deleting records: ' + error.message);
+        }
+    }
+
+    // Delete all records for a month (with password prompt)
+    async function deleteAllRecordsForMonth() {
+        closeDeleteOptions();
+
+        let selectedDate = '';
+        if (currentUser === 'admin') {
+            selectedDate = document.getElementById('adminDate')?.value || '';
+        } else {
+            selectedDate = document.getElementById('studentDate')?.value || '';
+        }
+
+        const monthPrefix = getMonthPrefix(selectedDate);
+        const monthName = getMonthName(selectedDate);
+
+        if (!monthPrefix) {
+            alert('Please select a date first to determine the month!');
+            return;
+        }
+
+        if (!facultyDatabase.attendance[currentFaculty]) {
+            alert('No records found for this month!');
+            return;
+        }
+
+        const dates = Object.keys(facultyDatabase.attendance[currentFaculty]);
+        const monthDates = dates.filter(date => date.startsWith(monthPrefix));
+        const totalRecords = monthDates.reduce((total, date) => {
+            return total + Object.keys(facultyDatabase.attendance[currentFaculty][date]).length;
+        }, 0);
+
+        if (monthDates.length === 0) {
+            alert('No records found for this month!');
+            return;
+        }
+
+        // Show password prompt immediately
+        showPasswordPrompt(
+            'Confirm Delete Month Records',
+            `Are you sure you want to delete ALL ${totalRecords} records from ${monthDates.length} dates in ${monthName}? Please enter the faculty password to confirm.`,
+            { type: 'DELETE_MONTH_RECORDS' }
+        );
+    }
+
+    // Execute delete month records (after password verification)
+    async function executeDeleteMonthRecords() {
+        let selectedDate = '';
+        if (currentUser === 'admin') {
+            selectedDate = document.getElementById('adminDate')?.value || '';
+        } else {
+            selectedDate = document.getElementById('studentDate')?.value || '';
+        }
+
+        const monthPrefix = getMonthPrefix(selectedDate);
+        const monthName = getMonthName(selectedDate);
+
+        if (!monthPrefix) {
+            alert('Please select a date first to determine the month!');
+            return;
+        }
+
+        if (!facultyDatabase.attendance[currentFaculty]) {
+            alert('No records found for this month!');
+            return;
+        }
+
+        const dates = Object.keys(facultyDatabase.attendance[currentFaculty]);
+        const monthDates = dates.filter(date => date.startsWith(monthPrefix));
+        const totalRecords = monthDates.reduce((total, date) => {
+            return total + Object.keys(facultyDatabase.attendance[currentFaculty][date]).length;
+        }, 0);
+
+        if (monthDates.length === 0) {
+            alert('No records found for this month!');
+            return;
+        }
+
+        try {
+            const records = {};
+            monthDates.forEach(date => {
+                records[date] = facultyDatabase.attendance[currentFaculty][date];
+                delete facultyDatabase.attendance[currentFaculty][date];
+            });
+
+            if (currentUser === 'admin') {
+                updateAdminTable();
+            } else {
+                updateStudentTable();
+            }
+
+            saveAllData();
+
+            if (!isOnline) {
+                addPendingChange({
+                    type: 'DELETE_MONTH_RECORDS',
+                    faculty: currentFaculty,
+                    monthPrefix: monthPrefix,
+                    originalRecords: records
+                });
+                alert(`${totalRecords} records from ${monthDates.length} dates deleted locally. Will sync when online.`);
+            } else {
+                try {
+                    await autoSaveToCloud();
+                    showNotification(`${totalRecords} records from ${monthDates.length} dates deleted successfully!`, 'success');
+                } catch (error) {
+                    addPendingChange({
+                        type: 'DELETE_MONTH_RECORDS',
+                        faculty: currentFaculty,
+                        monthPrefix: monthPrefix,
+                        originalRecords: records
+                    });
+                    showNotification(`${totalRecords} records deleted locally. Will sync when online.`, 'warning');
+                }
+            }
+        } catch (error) {
+            console.error('Delete error:', error);
+            alert('Error deleting records: ' + error.message);
+        }
+    }
+
+    // Confirm delete all records (with password prompt)
+    function confirmDeleteAllRecords() {
+        closeDeleteOptions();
+
+        if (!currentFaculty) {
+            alert('Please select a faculty first!');
+            return;
+        }
+
+        let facultyName = '';
+        let className = '';
+
+        for (const facultyId in facultyDatabase.faculties) {
+            const faculty = facultyDatabase.faculties[facultyId];
+            if (faculty.classes.includes(currentFaculty)) {
+                facultyName = faculty.name;
+                className = faculty.classNames[currentFaculty];
+                break;
+            }
+        }
+
+        const recordCount = facultyDatabase.attendance[currentFaculty] ?
+            Object.keys(facultyDatabase.attendance[currentFaculty]).reduce((total, date) => {
+                return total + Object.keys(facultyDatabase.attendance[currentFaculty][date]).length;
+            }, 0) : 0;
+
+        // Show password prompt immediately
+        showPasswordPrompt(
+            'Confirm Delete All Records',
+            `Are you sure you want to delete ALL ${recordCount} attendance records for ${className}? This action cannot be undone! Please enter the faculty password to confirm.`,
+            { type: 'DELETE_ALL_RECORDS' }
+        );
+    }
+
+    // Execute delete all records (after password verification)
+    async function executeDeleteAllRecords() {
+        if (!currentFaculty) {
+            alert('Please select a faculty first!');
+            return;
+        }
+
+        let facultyName = '';
+        let className = '';
+
+        for (const facultyId in facultyDatabase.faculties) {
+            const faculty = facultyDatabase.faculties[facultyId];
+            if (faculty.classes.includes(currentFaculty)) {
+                facultyName = faculty.name;
+                className = faculty.classNames[currentFaculty];
+                break;
+            }
+        }
+
+        const recordCount = facultyDatabase.attendance[currentFaculty] ?
+            Object.keys(facultyDatabase.attendance[currentFaculty]).reduce((total, date) => {
+                return total + Object.keys(facultyDatabase.attendance[currentFaculty][date]).length;
+            }, 0) : 0;
+
+        try {
+            facultyDatabase.attendance[currentFaculty] = {};
+
+            if (currentUser === 'admin') {
+                updateAdminTable();
+            } else {
+                updateStudentTable();
+            }
+
+            saveAllData();
+
+            if (!isOnline) {
+                addPendingChange({
+                    type: 'DELETE_ALL_RECORDS',
+                    faculty: currentFaculty
+                });
+                alert('All records deleted locally. Will sync when online.');
+            } else {
+                try {
+                    await autoSaveToCloud();
+                    showNotification('All records deleted successfully!', 'success');
+                } catch (error) {
+                    addPendingChange({
+                        type: 'DELETE_ALL_RECORDS',
+                        faculty: currentFaculty
+                    });
+                    showNotification('All records deleted locally. Will sync when online.', 'warning');
+                }
+            }
+        } catch (error) {
+            console.error('Delete error:', error);
+            alert('Error deleting records: ' + error.message);
+        }
+    }
+
+    // Print report
+    function printReport() {
+        let facultyName = '';
+        let className = '';
+
+        for (const facultyId in facultyDatabase.faculties) {
+            const faculty = facultyDatabase.faculties[facultyId];
+            if (faculty.classes.includes(currentFaculty)) {
+                facultyName = faculty.name;
+                className = faculty.classNames[currentFaculty];
+                break;
+            }
+        }
+
+        const teachers = facultyDatabase.teachers[currentFaculty] || [];
+        const attendanceData = facultyDatabase.attendance[currentFaculty] || {};
+        
+        let selectedDate = '';
+        if (currentUser === 'admin') {
+            selectedDate = document.getElementById('adminDate')?.value || '';
+        } else {
+            selectedDate = document.getElementById('studentDate')?.value || '';
+        }
+        
+        let selectedMonth = '';
+        if (selectedDate) {
+            selectedMonth = getMonthPrefix(selectedDate);
+        }
+        
+        let dates = Object.keys(attendanceData).sort();
+        if (selectedMonth) {
+            dates = dates.filter(date => date.startsWith(selectedMonth));
+        }
+        
+        const totals = calculateTotals(currentFaculty, dates);
+
+        const now = new Date();
+        const printDate = currentUser === 'admin' ?
+            document.getElementById('printDate') :
+            document.getElementById('studentPrintDate');
+
+        printDate.textContent = `Printed: ${now.toLocaleDateString('en-US', {
+            year: 'numeric', month: 'long', day: 'numeric',
+            hour: '2-digit', minute: '2-digit'
+        })} | Last Sync: ${lastSyncTime ? lastSyncTime.toLocaleTimeString() : 'Never'}`;
+
+        printDate.style.display = 'block';
+
+        const printDiv = document.createElement('div');
+        printDiv.style.cssText = 'position: absolute; left: -9999px; top: 0;';
+        printDiv.innerHTML = `
+            <div style="text-align: center; margin-bottom: 20px;">
+                <h2>MYAGDI MULTIPLE CAMPUS</h2>
+                <h3>Beni, Myagdi</h3>
+                <h4>Teacher's Attendance - ${facultyName} - ${className}</h4>
+                <p>Generated: ${now.toLocaleDateString()} | Cloud Sync: ${lastSyncTime ? lastSyncTime.toLocaleDateString() : 'Not synced'}</p>
+            </div>
+            <table border="1" cellspacing="0" cellpadding="4" style="width: 100%; border-collapse: collapse; font-size: 9pt;">
+                <thead>
+                    <tr>
+                        <th rowspan="2" style="width: 80px;">Date (BS)</th>
+                        ${teachers.map(teacher => `<th colspan="2" style="font-weight: bold;">${teacher}</th>`).join('')}
+                    </tr>
+                    <tr>
+                        ${teachers.map(() => `<th>Enter</th><th>Exit</th>`).join('')}
+                    </tr>
+                </thead>
+                <tbody>
+                    ${dates.map(date => {
+                        const dateData = attendanceData[date];
+                        const firstRecord = dateData[0];
+                        const isSpecialDate = firstRecord &&
+                                             (firstRecord.status === 'SATURDAY' || 
+                                              firstRecord.status === 'HOLIDAY');
+
+                        if (isSpecialDate) {
+                            const statusText = firstRecord.customText || 
+                                             (firstRecord.status === 'SATURDAY' ? 'Saturday' : 'Holiday');
+                            return `
+                                <tr>
+                                    <td style="font-weight: bold;">${date}</td>
+                                    <td colspan="${teachers.length * 2}" style="text-align: center; font-weight: bold; font-size: 12px;">
+                                        ${statusText}
+                                    </td>
+                                </tr>
+                            `;
+                        } else {
+                            return `
+                                <tr>
+                                    <td style="font-weight: bold;">${date}</td>
+                                    ${teachers.map((teacher, index) => {
+                                        if (dateData && dateData[index]) {
+                                            const record = dateData[index];
+                                            return `<td>${record.enter || '-'}</td><td>${record.exit || '-'}</td>`;
+                                        } else {
+                                            return '<td>-</td><td>-</td>';
+                                        }
+                                    }).join('')}
+                                </tr>
+                            `;
+                        }
+                    }).join('')}
+                </tbody>
+                <tfoot>
+                    <tr style="background-color: #f2f2f2; font-weight: bold;">
+                        <td>Total Time</td>
+                        ${totals.totalTimes.map(totalMinutes => {
+                            const hours = Math.floor(totalMinutes / 60);
+                            const minutes = totalMinutes % 60;
+                            return `<td colspan="2">${hours} hr ${minutes} min</td>`;
+                        }).join('')}
+                    </tr>
+                    <tr style="background-color: #f2f2f2; font-weight: bold;">
+                        <td>Total Present</td>
+                        ${totals.presentCounts.map(count => `<td colspan="2">${count}</td>`).join('')}
+                    </tr>
+                </tfoot>
+            </table>
+        `;
+
+        document.body.appendChild(printDiv);
+
+        window.print();
+
+        document.body.removeChild(printDiv);
+        printDate.style.display = 'none';
+    }
+
+    // Helper functions
+    function formatTime(time) {
+        if (!time) return '';
+        let [h, m] = time.split(':').map(Number);
+        const ampm = h >= 12 ? 'PM' : 'AM';
+        h = h % 12 || 12;
+        return `${h}:${m.toString().padStart(2, '0')} ${ampm}`;
+    }
+
+    // Data persistence
+    function saveAllData() {
+        localStorage.setItem('facultyDatabase', JSON.stringify(facultyDatabase));
+        localStorage.setItem('lastLocalSave', new Date().toISOString());
+    }
+
+    function loadAllData() {
+        const saved = localStorage.getItem('facultyDatabase');
+        if (saved) {
+            try {
+                const loaded = JSON.parse(saved);
+
+                if (loaded.faculties) facultyDatabase.faculties = loaded.faculties;
+                if (loaded.teachers) facultyDatabase.teachers = loaded.teachers;
+                if (loaded.attendance) facultyDatabase.attendance = loaded.attendance;
+                if (loaded.passwords) facultyDatabase.passwords = loaded.passwords;
+
+                console.log('Loaded from localStorage');
+            } catch (e) {
+                console.error('Load error:', e);
+            }
+        }
+    }
+
+    // Add event listeners for delete forms
+    document.addEventListener('DOMContentLoaded', function() {
+        const deleteDateInput = document.getElementById('deleteDateInput');
+        if (deleteDateInput) {
+            deleteDateInput.addEventListener('input', updateDateRecordsPreview);
+            deleteDateInput.addEventListener('change', updateDateRecordsPreview);
+        }
+        
+        const adminDateInput = document.getElementById('adminDate');
+        const studentDateInput = document.getElementById('studentDate');
+        
+        if (adminDateInput && selectedDateCache['adminDate']) {
+            adminDateInput.value = selectedDateCache['adminDate'];
+        }
+        
+        if (studentDateInput && selectedDateCache['studentDate']) {
+            studentDateInput.value = selectedDateCache['studentDate'];
+        }
+    });
+</script>
+</body>
+</html>
+ 
